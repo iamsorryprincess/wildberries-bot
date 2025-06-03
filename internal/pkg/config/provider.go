@@ -1,9 +1,6 @@
 package config
 
-type Config interface {
-	SetDefaults()
-}
-
-func Load[TConfig Config]() (TConfig, error) {
-	return LoadYAML[TConfig]("config.yaml")
+func Load[TConfig any]() (TConfig, error) {
+	var cfg TConfig
+	return cfg, nil
 }
