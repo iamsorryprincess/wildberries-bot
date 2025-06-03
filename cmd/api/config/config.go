@@ -1,5 +1,5 @@
 package config
 
 type Config struct {
-	LogLevel string `config:"loglevel"`
+	LogLevel string `config:"loglevel" default:"info"`
 }
