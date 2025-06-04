@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/iamsorryprincess/wildberries-bot/cmd/api/config"
+	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/background"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/log"
 )
 
@@ -25,4 +26,10 @@ func (a *App) Run() {
 
 	a.config = cfg
 	a.logger = log.New(a.config.LogLevel, serviceName)
+
+	a.logger.Info().Msg("service started")
+
+	s := background.Wait()
+
+	a.logger.Info().Str("signal", s.String()).Msg("service stopped")
 }
