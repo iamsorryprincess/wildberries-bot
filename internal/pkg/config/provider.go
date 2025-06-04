@@ -1,15 +1,35 @@
 package config
 
-import "io"
+type Reader interface {
+	Read() ([]byte, error)
+}
 
 type Parser[TConfig any] interface {
-	Parse(reader io.Reader) (TConfig, error)
+	Parse(data []byte) (TConfig, error)
 }
 
-type Provider[TConfig any] interface {
-	Get() (TConfig, error)
+type SetDefaults func()
+
+func ReadConfig[TConfig any](reader Reader, parser Parser[TConfig], defaults ...SetDefaults) (TConfig, error) {
+	var cfg TConfig
+
+	data, err := reader.Read()
+	if err != nil {
+		return cfg, err
+	}
+
+	for _, setDefaultFunc := range defaults {
+		setDefaultFunc()
+	}
+
+	cfg, err = parser.Parse(data)
+	if err != nil {
+		return cfg, err
+	}
+
+	return cfg, nil
 }
 
-func Load[TConfig any]() (TConfig, error) {
-	return NewFileProvider[TConfig]("config.json", NewJSONParser[TConfig]()).Get()
+func Load[TConfig any](defaults ...SetDefaults) (TConfig, error) {
+	return ReadConfig[TConfig](NewFileProvider("config.yaml"), NewYamlParser[TConfig](), defaults...)
 }

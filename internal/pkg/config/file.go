@@ -6,39 +6,49 @@ import (
 	"os"
 )
 
-type FileProvider[TConfig any] struct {
+type FileProvider struct {
 	filename string
-	parser   Parser[TConfig]
 }
 
-func NewFileProvider[TConfig any](filename string, parser Parser[TConfig]) *FileProvider[TConfig] {
-	return &FileProvider[TConfig]{
+func NewFileProvider(filename string) *FileProvider {
+	return &FileProvider{
 		filename: filename,
-		parser:   parser,
 	}
 }
 
-func (p *FileProvider[TConfig]) Get() (TConfig, error) {
-	var cfg TConfig
-
+func (p *FileProvider) Read() ([]byte, error) {
 	file, err := os.OpenFile(p.filename, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		return cfg, fmt.Errorf("file provider open file: %w", err)
+		return nil, fmt.Errorf("config file provider open file: %w", err)
 	}
 
-	cfg, err = p.parser.Parse(file)
+	fileInfo, err := file.Stat()
 	if err != nil {
-		err = fmt.Errorf("file provider parse: %w", err)
-		if cErr := file.Close(); cErr != nil {
-			return cfg, errors.Join(err, fmt.Errorf("file provider close file: %w", cErr))
+		err = fmt.Errorf("config file provider stat file: %w", err)
+
+		var cErr error
+		if cErr = file.Close(); cErr != nil {
+			return nil, errors.Join(err, fmt.Errorf("config file provider close file: %w", cErr))
 		}
 
-		return cfg, err
+		return nil, err
+	}
+
+	data := make([]byte, fileInfo.Size())
+	if _, err = file.Read(data); err != nil {
+		err = fmt.Errorf("config file provider read file: %w", err)
+
+		var cErr error
+		if cErr = file.Close(); cErr != nil {
+			return nil, errors.Join(err, fmt.Errorf("config file provider close file: %w", cErr))
+		}
+
+		return nil, err
 	}
 
 	if err = file.Close(); err != nil {
-		return cfg, fmt.Errorf("file provider close file: %w", err)
+		return nil, fmt.Errorf("config file provider close file: %w", err)
 	}
 
-	return cfg, nil
+	return data, nil
 }

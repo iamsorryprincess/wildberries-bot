@@ -2,7 +2,6 @@ package app
 
 import (
 	"github.com/iamsorryprincess/wildberries-bot/cmd/api/config"
-	configutils "github.com/iamsorryprincess/wildberries-bot/internal/pkg/config"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/log"
 )
 
@@ -18,12 +17,12 @@ func New() *App {
 }
 
 func (a *App) Run() {
-	var err error
-
-	if a.config, err = configutils.Load[config.Config](); err != nil {
-		log.New("error", serviceName).Error().Err(err).Msg("failed to load config")
+	cfg, err := config.Init()
+	if err != nil {
+		log.New("error", serviceName).Error().Err(err).Msg("init config failed")
 		return
 	}
 
+	a.config = cfg
 	a.logger = log.New(a.config.LogLevel, serviceName)
 }
