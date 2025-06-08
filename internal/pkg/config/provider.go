@@ -1,5 +1,7 @@
 package config
 
+import "flag"
+
 type Reader interface {
 	Read() ([]byte, error)
 }
@@ -31,5 +33,7 @@ func ReadConfig[TConfig any](reader Reader, parser Parser[TConfig], defaults ...
 }
 
 func Load[TConfig any](defaults ...SetDefaults) (TConfig, error) {
-	return ReadConfig[TConfig](NewFileProvider("config.yaml"), NewYamlParser[TConfig](), defaults...)
+	filename := flag.String("config", "config.yaml", "config file path")
+	flag.Parse()
+	return ReadConfig[TConfig](NewFileProvider(*filename), NewYamlParser[TConfig](), defaults...)
 }
