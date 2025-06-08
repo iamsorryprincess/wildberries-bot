@@ -6,10 +6,20 @@ import (
 	"syscall"
 )
 
-func Wait() os.Signal {
+type AppErrors interface {
+	Push(err error)
+	Errors() <-chan error
+}
+
+func Wait(appErrors AppErrors) (os.Signal, error) {
 	exit := make(chan os.Signal, 1)
 	signal.Notify(exit, syscall.SIGINT, syscall.SIGTERM)
-	s := <-exit
-	signal.Stop(exit)
-	return s
+
+	select {
+	case s := <-exit:
+		signal.Stop(exit)
+		return s, nil
+	case err := <-appErrors.Errors():
+		return nil, err
+	}
 }

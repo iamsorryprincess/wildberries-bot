@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/iamsorryprincess/wildberries-bot/cmd/api/config"
+	httpapp "github.com/iamsorryprincess/wildberries-bot/cmd/api/http"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/background"
+	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/http"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/log"
 )
 
@@ -15,10 +17,13 @@ type App struct {
 	logger log.Logger
 
 	closeStack *background.CloseStack
+	appErrors  *background.ErrorsChannel
 
 	ctx context.Context
 
 	worker *background.Worker
+
+	httpServer *http.Server
 }
 
 func New() *App {
@@ -37,6 +42,7 @@ func (a *App) Run() {
 
 	a.closeStack = background.NewCloseStack(a.logger)
 	defer a.closeStack.Close()
+	a.appErrors = background.NewErrorsChannel()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	a.ctx = ctx
@@ -44,13 +50,25 @@ func (a *App) Run() {
 
 	a.initWorkers()
 
+	a.initHTTP()
+
 	a.logger.Info().Msg("service started")
 
-	s := background.Wait()
+	s, err := background.Wait(a.appErrors)
+	if err != nil {
+		a.logger.Error().Err(err).Msg("service failed")
+		return
+	}
 
 	a.logger.Info().Str("signal", s.String()).Msg("service stopped")
 }
 
 func (a *App) initWorkers() {
 	a.worker = background.NewWorker(a.logger, a.closeStack)
+}
+
+func (a *App) initHTTP() {
+	handler := httpapp.NewHandler(a.logger)
+	a.httpServer = http.NewServer(a.logger, a.config.HTTPConfig, a.closeStack, a.appErrors, handler)
+	a.httpServer.Start()
 }

@@ -2,13 +2,14 @@ package background
 
 import (
 	"io"
+	"reflect"
 	"sync"
 
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/log"
 )
 
-type CloserList interface {
-	Add(closer io.Closer)
+type CloserStack interface {
+	Push(closer io.Closer)
 }
 
 type CloseStack struct {
@@ -24,7 +25,7 @@ func NewCloseStack(logger log.Logger) *CloseStack {
 	}
 }
 
-func (s *CloseStack) Add(closer io.Closer) {
+func (s *CloseStack) Push(closer io.Closer) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.elems = append(s.elems, closer)
@@ -36,10 +37,14 @@ func (s *CloseStack) Close() {
 
 	for i := len(s.elems) - 1; i >= 0; i-- {
 		closer := s.elems[i]
+		t := reflect.TypeOf(closer)
+
 		if err := closer.Close(); err != nil {
-			s.logger.Error().Err(err).Msg("close failed")
+			s.logger.Error().Err(err).Str("type", t.String()).Msg("close failed")
+			continue
 		}
-		s.logger.Debug().Msg("close succeeded")
+
+		s.logger.Debug().Str("type", t.String()).Msg("close succeeded")
 	}
 
 	s.elems = s.elems[:0]

@@ -18,12 +18,12 @@ type Worker struct {
 	wg sync.WaitGroup
 }
 
-func NewWorker(logger log.Logger, closerList CloserList) *Worker {
+func NewWorker(logger log.Logger, closerStack CloserStack) *Worker {
 	w := &Worker{
 		logger: logger,
 	}
 
-	closerList.Add(w)
+	closerStack.Push(w)
 	return w
 }
 
