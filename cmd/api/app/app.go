@@ -21,6 +21,8 @@ type App struct {
 
 	ctx context.Context
 
+	productsClient *httpapp.ProductClient
+
 	worker *background.Worker
 
 	httpServer *http.Server
@@ -48,6 +50,8 @@ func (a *App) Run() {
 	a.ctx = ctx
 	defer cancel()
 
+	a.initServices()
+
 	a.initWorkers()
 
 	a.initHTTP()
@@ -61,6 +65,10 @@ func (a *App) Run() {
 	}
 
 	a.logger.Info().Str("signal", s.String()).Msg("service stopped")
+}
+
+func (a *App) initServices() {
+	a.productsClient = httpapp.NewProductClient(a.logger, a.config.ProductsClientConfig)
 }
 
 func (a *App) initWorkers() {

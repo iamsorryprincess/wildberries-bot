@@ -35,5 +35,5 @@ func ReadConfig[TConfig any](reader Reader, parser Parser[TConfig], defaults ...
 func Load[TConfig any](defaults ...SetDefaults) (TConfig, error) {
 	filename := flag.String("config", "config.yaml", "config file path")
 	flag.Parse()
-	return ReadConfig[TConfig](NewFileProvider(*filename), NewYamlParser[TConfig](), defaults...)
+	return ReadConfig(NewFileProvider(*filename), NewYamlParser[TConfig](), defaults...)
 }

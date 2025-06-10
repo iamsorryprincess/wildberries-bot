@@ -1,1 +1,5 @@
 loglevel: "debug"
+
+products_client:
+  request_url: "https://catalog.wb.ru/catalog/%s/v2/catalog?ab_testing=false&appType=1&cat=8137&curr=rub&dest=-1257786&hide_dtype=13&lang=ru&page=%d&sort=popular&spp=30"
+  product_url: "https://www.wildberries.ru/catalog/%d/detail.aspx"
