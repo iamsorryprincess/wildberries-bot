@@ -18,21 +18,26 @@ type ProductClient interface {
 	GetProducts(ctx context.Context, request ProductsRequest) ([]Product, error)
 }
 
+type ProductSize struct {
+	Name string `json:"name"`
+
+	FirstPrice    float32 `json:"firstPrice"`
+	PreviousPrice float32 `json:"previousPrice"`
+	CurrentPrice  float32 `json:"currentPrice"`
+
+	FirstDate time.Time `json:"firstDate"`
+	LastDate  time.Time `json:"lastDate"`
+}
+
 type Product struct {
 	ID     uint64  `json:"id"`
 	Name   string  `json:"name"`
 	Rating float32 `json:"rating"`
-	Size   string  `json:"size"`
+	URL    string  `json:"url"`
 
 	Brand   string `json:"brand"`
 	BrandID uint64 `json:"brandId"`
 
-	Colors []string `json:"colors"`
-
-	FirstValue    float32 `json:"firstValue"`
-	PreviousValue float32 `json:"previousValue"`
-	CurrentValue  float32 `json:"currentValue"`
-
-	FirstDate time.Time `json:"firstDate"`
-	LastDate  time.Time `json:"lastDate"`
+	Colors []string      `json:"colors"`
+	Sizes  []ProductSize `json:"sizes"`
 }

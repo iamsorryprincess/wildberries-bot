@@ -16,7 +16,7 @@ type ProductClientConfig struct {
 	RequestURL string `config:"request_url"`
 	ProductURL string `config:"product_url"`
 
-	RetryCount int           `config:"retry_count"`
+	RetryCount uint          `config:"retry_count"`
 	RetryDelay time.Duration `config:"retry_delay"`
 }
 
@@ -76,7 +76,7 @@ func (c *ProductClient) GetProducts(_ context.Context, request model.ProductsReq
 	httpRequest.Header.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36")
 
 	var httpResponse *http.Response
-	retryCount := 0
+	var retryCount uint
 
 	for {
 		httpResponse, err = c.client.Do(httpRequest)
@@ -93,8 +93,8 @@ func (c *ProductClient) GetProducts(_ context.Context, request model.ProductsReq
 
 			c.logger.Warn().
 				Int("status", httpResponse.StatusCode).
-				Int("retry_count", retryCount).
-				Msg("ProductClient.GetData get bad status trying to retry")
+				Uint("try", retryCount+1).
+				Msg("ProductClient.GetData response bad status trying to retry")
 
 			if err = httpResponse.Body.Close(); err != nil {
 				c.logger.Warn().Err(err).Msg("ProductClient.GetData failed to close response body")
@@ -135,6 +135,18 @@ func (c *ProductClient) GetProducts(_ context.Context, request model.ProductsReq
 			colors = append(colors, color.Name)
 		}
 
+		product := model.Product{
+			ID:     item.ID,
+			Name:   item.Name,
+			Rating: item.Rating,
+			URL:    fmt.Sprintf(c.config.ProductURL, item.ID),
+
+			Brand:   item.Brand,
+			BrandID: item.BrandID,
+
+			Colors: colors,
+		}
+
 		for _, size := range item.Sizes {
 			priceValue := fmt.Sprintf("%.f", size.Price.Total)
 			strPriceValue := priceValue[:len(priceValue)-2]
@@ -143,19 +155,16 @@ func (c *ProductClient) GetProducts(_ context.Context, request model.ProductsReq
 				return nil, fmt.Errorf("ProductClient.GetData parse product:%d price error: %w", item.ID, err)
 			}
 
-			product := model.Product{
-				ID:           item.ID,
-				Name:         item.Name,
-				Rating:       item.Rating,
-				Size:         size.Name,
-				Brand:        item.Brand,
-				BrandID:      item.BrandID,
-				Colors:       colors,
-				CurrentValue: float32(floatPriceValue),
+			size := model.ProductSize{
+				Name:         size.Name,
+				CurrentPrice: float32(floatPriceValue),
 				LastDate:     currentDate,
 			}
-			result = append(result, product)
+
+			product.Sizes = append(product.Sizes, size)
 		}
+
+		result = append(result, product)
 	}
 
 	return result, nil
