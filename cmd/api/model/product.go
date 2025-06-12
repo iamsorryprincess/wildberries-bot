@@ -1,9 +1,6 @@
 package model
 
-import (
-	"context"
-	"time"
-)
+import "time"
 
 const (
 	ProductCategoryDresses = "dresses"
@@ -12,10 +9,6 @@ const (
 type ProductsRequest struct {
 	Page     int    `json:"page"`
 	Category string `json:"category"`
-}
-
-type ProductClient interface {
-	GetProducts(ctx context.Context, request ProductsRequest) ([]Product, error)
 }
 
 type ProductSize struct {

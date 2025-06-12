@@ -2,9 +2,12 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/iamsorryprincess/wildberries-bot/cmd/api/config"
 	httpapp "github.com/iamsorryprincess/wildberries-bot/cmd/api/http"
+	"github.com/iamsorryprincess/wildberries-bot/cmd/api/repository"
+	"github.com/iamsorryprincess/wildberries-bot/cmd/api/service"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/background"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/http"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/log"
@@ -21,7 +24,11 @@ type App struct {
 
 	ctx context.Context
 
-	productsClient *httpapp.ProductClient
+	productRepository *repository.MongodbProductRepository
+
+	productClient *httpapp.ProductClient
+
+	productUpdateService *service.ProductUpdateService
 
 	worker *background.Worker
 
@@ -50,6 +57,8 @@ func (a *App) Run() {
 	a.ctx = ctx
 	defer cancel()
 
+	a.initRepositories()
+
 	a.initServices()
 
 	a.initWorkers()
@@ -67,12 +76,18 @@ func (a *App) Run() {
 	a.logger.Info().Str("signal", s.String()).Msg("service stopped")
 }
 
+func (a *App) initRepositories() {
+	a.productRepository = repository.NewMongodbProductRepository()
+}
+
 func (a *App) initServices() {
-	a.productsClient = httpapp.NewProductClient(a.logger, a.config.ProductsClientConfig)
+	a.productClient = httpapp.NewProductClient(a.logger, a.config.ProductsClientConfig)
+	a.productUpdateService = service.NewUpdateService(a.logger, a.productClient, a.productRepository)
 }
 
 func (a *App) initWorkers() {
 	a.worker = background.NewWorker(a.logger, a.closeStack)
+	a.worker.RunWithInterval(a.ctx, "update products", time.Minute*15, a.productUpdateService.Update)
 }
 
 func (a *App) initHTTP() {

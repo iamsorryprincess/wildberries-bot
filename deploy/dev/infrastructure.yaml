@@ -1,0 +1,20 @@
+name: wildberries-bot-dev-infrastructure
+
+services:
+  mongodb:
+    image: mongo:4.4.10
+    container_name: wildberries-bot-mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=test*
+      - MONGO_INITDB_ROOT_PASSWORD=test123*
+    ports:
+     - "27017:27017"
+    networks:
+      - wildberries-bot-dev-infrastructure-network
+    volumes:
+      - ./docker/volumes/mongodb:/data/db
+
+networks:
+  wildberries-bot-dev-infrastructure-network:
+    name: wildberries-bot-dev-infrastructure-network
+    driver: bridge

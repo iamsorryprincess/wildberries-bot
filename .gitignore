@@ -24,3 +24,6 @@ go.work.sum
 # Editor/IDE
 .idea/
 .vscode/
+
+# docker volumes and other files for dev testing
+deploy/dev/docker/
