@@ -82,7 +82,7 @@ func (r *MysqlProductRepository) Update(ctx context.Context, products []model.Pr
 		}
 	}
 
-	const duplicateProductsStmt = " on duplicate key update updated_at = NOW()"
+	const duplicateProductsStmt = " on duplicate key update updated_at = NOW();"
 	insertProductsBuilder.WriteString(duplicateProductsStmt)
 
 	productsQuery := insertProductsBuilder.String()
@@ -90,11 +90,10 @@ func (r *MysqlProductRepository) Update(ctx context.Context, products []model.Pr
 		return fmt.Errorf("mysql products repository: failed exec insert products: %w", err)
 	}
 
-	const duplicateSizesStmt = ` on duplicate key
-update
-  previous_price = current_price,
-  current_price = VALUES(current_price),
-  updated_at = NOW()`
+	const duplicateSizesStmt = ` as new_values on duplicate key update
+  previous_price = products_sizes.current_price,
+  current_price = new_values.current_price,
+  updated_at = NOW();`
 	insertSizesBuilder.WriteString(duplicateSizesStmt)
 
 	sizesQuery := insertSizesBuilder.String()
