@@ -1,8 +1,10 @@
 package model
 
-const (
-	ProductCategoryDresses = "dresses"
-)
+import "errors"
+
+const ProductCategoryDresses = "dresses"
+
+var ErrRequestLimit = errors.New("request limit exceeded")
 
 type ProductsRequest struct {
 	Page     int    `json:"page"`

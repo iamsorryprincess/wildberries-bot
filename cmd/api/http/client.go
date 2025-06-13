@@ -119,6 +119,9 @@ func (c *ProductClient) GetProducts(_ context.Context, request model.ProductsReq
 	}
 
 	if httpResponse.StatusCode != http.StatusOK {
+		if httpResponse.StatusCode == http.StatusTooManyRequests {
+			return nil, model.ErrRequestLimit
+		}
 		return nil, fmt.Errorf("ProductClient.GetData http status is not ok; status: %d", httpResponse.StatusCode)
 	}
 

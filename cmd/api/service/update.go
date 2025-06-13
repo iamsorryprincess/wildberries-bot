@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/iamsorryprincess/wildberries-bot/cmd/api/model"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/log"
@@ -40,6 +41,9 @@ func (s *ProductUpdateService) Update(ctx context.Context) error {
 
 		products, err := s.client.GetProducts(ctx, request)
 		if err != nil {
+			if errors.Is(err, model.ErrRequestLimit) {
+				return nil
+			}
 			return err
 		}
 
