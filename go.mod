@@ -3,12 +3,14 @@ module github.com/iamsorryprincess/wildberries-bot
 go 1.24.3
 
 require (
+	github.com/go-sql-driver/mysql v1.9.3
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/viper v1.20.1
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect

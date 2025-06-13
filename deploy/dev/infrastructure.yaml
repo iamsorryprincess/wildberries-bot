@@ -1,18 +1,21 @@
 name: wildberries-bot-dev-infrastructure
 
 services:
-  mongodb:
-    image: mongo:4.4.10
-    container_name: wildberries-bot-mongodb
+  mysql:
+    image: mysql:8.0
+    container_name: wildberries-bot-mysql
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=test*
-      - MONGO_INITDB_ROOT_PASSWORD=test123*
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=test
+      - MYSQL_PASSWORD=test
+      - MYSQL_DATABASE=testdb
     ports:
-     - "27017:27017"
+     - "3306:3306"
     networks:
       - wildberries-bot-dev-infrastructure-network
     volumes:
-      - ./docker/volumes/mongodb:/data/db
+      - ~/github/volumes/wildberries-bot/dev/mysql:/var/lib/mysql
+    command: [ 'mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci' ]
 
 networks:
   wildberries-bot-dev-infrastructure-network:

@@ -2,13 +2,13 @@ package app
 
 import (
 	"context"
-	"time"
 
 	"github.com/iamsorryprincess/wildberries-bot/cmd/api/config"
 	httpapp "github.com/iamsorryprincess/wildberries-bot/cmd/api/http"
 	"github.com/iamsorryprincess/wildberries-bot/cmd/api/repository"
 	"github.com/iamsorryprincess/wildberries-bot/cmd/api/service"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/background"
+	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/database/mysql"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/http"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/log"
 )
@@ -24,7 +24,9 @@ type App struct {
 
 	ctx context.Context
 
-	productRepository *repository.MongodbProductRepository
+	mysqlConn *mysql.Connection
+
+	productRepository *repository.MysqlProductRepository
 
 	productClient *httpapp.ProductClient
 
@@ -57,6 +59,10 @@ func (a *App) Run() {
 	a.ctx = ctx
 	defer cancel()
 
+	if err = a.initDatabases(); err != nil {
+		return
+	}
+
 	a.initRepositories()
 
 	a.initServices()
@@ -76,8 +82,21 @@ func (a *App) Run() {
 	a.logger.Info().Str("signal", s.String()).Msg("service stopped")
 }
 
+func (a *App) initDatabases() error {
+	var err error
+
+	a.mysqlConn, err = mysql.NewConnection(a.logger, a.config.MysqlConfig, a.closeStack)
+	if err != nil {
+		a.logger.Error().Err(err).Msg("mysql connect failed")
+		return err
+	}
+
+	a.logger.Info().Msg("mysql connected successful")
+	return nil
+}
+
 func (a *App) initRepositories() {
-	a.productRepository = repository.NewMongodbProductRepository()
+	a.productRepository = repository.NewMysqlProductRepository(a.mysqlConn)
 }
 
 func (a *App) initServices() {
@@ -87,7 +106,7 @@ func (a *App) initServices() {
 
 func (a *App) initWorkers() {
 	a.worker = background.NewWorker(a.logger, a.closeStack)
-	a.worker.RunWithInterval(a.ctx, "update products", time.Minute*15, a.productUpdateService.Update)
+	//a.worker.RunWithInterval(a.ctx, "update products", time.Minute*15, a.productUpdateService.Update)
 }
 
 func (a *App) initHTTP() {
