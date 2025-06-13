@@ -13,3 +13,6 @@ dev-infrastructure-run:
 
 dev-infrastructure-down:
 	docker compose -f $(backend_dev_dir)/infrastructure.yaml -p wildberries-bot-dev-infrastructure down
+
+dev-mysql-connect:
+	mysql --login-path=wb-bot-dev -D testdb

@@ -1,7 +1,5 @@
 package model
 
-import "time"
-
 const (
 	ProductCategoryDresses = "dresses"
 )
@@ -12,14 +10,10 @@ type ProductsRequest struct {
 }
 
 type ProductSize struct {
-	Name string `json:"name"`
-
+	Name          string  `json:"name"`
 	FirstPrice    float32 `json:"firstPrice"`
 	PreviousPrice float32 `json:"previousPrice"`
 	CurrentPrice  float32 `json:"currentPrice"`
-
-	FirstDate time.Time `json:"firstDate"`
-	LastDate  time.Time `json:"lastDate"`
 }
 
 type Product struct {

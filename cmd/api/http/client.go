@@ -128,7 +128,6 @@ func (c *ProductClient) GetProducts(_ context.Context, request model.ProductsReq
 	}
 
 	var result []model.Product
-	currentDate := time.Now()
 	for _, item := range respData.Data.Products {
 		colors := make([]string, 0, len(item.Colors))
 		for _, color := range item.Colors {
@@ -158,7 +157,6 @@ func (c *ProductClient) GetProducts(_ context.Context, request model.ProductsReq
 			size := model.ProductSize{
 				Name:         size.Name,
 				CurrentPrice: float32(floatPriceValue),
-				LastDate:     currentDate,
 			}
 
 			product.Sizes = append(product.Sizes, size)
