@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/iamsorryprincess/wildberries-bot/cmd/api/config"
 	httpapp "github.com/iamsorryprincess/wildberries-bot/cmd/api/http"
@@ -96,7 +97,7 @@ func (a *App) initDatabases() error {
 }
 
 func (a *App) initRepositories() {
-	a.productRepository = repository.NewMysqlProductRepository(a.mysqlConn)
+	a.productRepository = repository.NewMysqlProductRepository(a.logger, a.mysqlConn)
 }
 
 func (a *App) initServices() {
@@ -106,7 +107,7 @@ func (a *App) initServices() {
 
 func (a *App) initWorkers() {
 	a.worker = background.NewWorker(a.logger, a.closeStack)
-	//a.worker.RunWithInterval(a.ctx, "update products", time.Minute*15, a.productUpdateService.Update)
+	a.worker.RunWithInterval(a.ctx, "update products", time.Minute*15, a.productUpdateService.Update)
 }
 
 func (a *App) initHTTP() {
