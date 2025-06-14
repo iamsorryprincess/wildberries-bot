@@ -2,16 +2,16 @@ package app
 
 import (
 	"context"
-	"time"
 
 	"github.com/iamsorryprincess/wildberries-bot/cmd/api/config"
-	httpapp "github.com/iamsorryprincess/wildberries-bot/cmd/api/http"
+	httptransport "github.com/iamsorryprincess/wildberries-bot/cmd/api/http"
 	"github.com/iamsorryprincess/wildberries-bot/cmd/api/repository"
 	"github.com/iamsorryprincess/wildberries-bot/cmd/api/service"
+	telegramtransport "github.com/iamsorryprincess/wildberries-bot/cmd/api/telegram"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/background"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/database/mysql"
-	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/http"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/log"
+	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/telegram"
 )
 
 const serviceName = "api"
@@ -29,13 +29,13 @@ type App struct {
 
 	productRepository *repository.MysqlProductRepository
 
-	productClient *httpapp.ProductClient
+	productClient *httptransport.ProductClient
 
 	productUpdateService *service.ProductUpdateService
 
-	worker *background.Worker
+	botClient *telegram.BotClient
 
-	httpServer *http.Server
+	worker *background.Worker
 }
 
 func New() *App {
@@ -68,9 +68,11 @@ func (a *App) Run() {
 
 	a.initServices()
 
-	a.initWorkers()
+	if err = a.initTelegram(); err != nil {
+		return
+	}
 
-	a.initHTTP()
+	a.initWorkers()
 
 	a.logger.Info().Msg("service started")
 
@@ -101,17 +103,26 @@ func (a *App) initRepositories() {
 }
 
 func (a *App) initServices() {
-	a.productClient = httpapp.NewProductClient(a.logger, a.config.ProductsClientConfig)
+	a.productClient = httptransport.NewProductClient(a.logger, a.config.ProductsClientConfig)
 	a.productUpdateService = service.NewUpdateService(a.logger, a.productClient, a.productRepository)
+}
+
+func (a *App) initTelegram() error {
+	defaultHandlerOption := telegramtransport.NewStartHandlerOption(a.logger)
+
+	botClient, err := telegram.NewBotClient(a.config.TelegramConfig, defaultHandlerOption)
+	if err != nil {
+		a.logger.Error().Err(err).Msg("telegram bot client init failed")
+		return err
+	}
+
+	a.botClient = botClient
+	telegramtransport.InitHandlers(a.logger, a.botClient)
+	a.botClient.Start(a.ctx, a.closeStack)
+	return nil
 }
 
 func (a *App) initWorkers() {
 	a.worker = background.NewWorker(a.logger, a.closeStack)
-	a.worker.RunWithInterval(a.ctx, "update products", time.Minute*15, a.productUpdateService.Update)
-}
-
-func (a *App) initHTTP() {
-	handler := httpapp.NewHandler(a.logger)
-	a.httpServer = http.NewServer(a.logger, a.config.HTTPConfig, a.closeStack, a.appErrors, handler)
-	a.httpServer.Start()
+	// a.worker.RunWithInterval(a.ctx, "update products", time.Minute*15, a.productUpdateService.Update)
 }

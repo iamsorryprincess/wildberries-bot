@@ -7,6 +7,7 @@ import (
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/config"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/database/mysql"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/http"
+	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/telegram"
 	"github.com/spf13/viper"
 )
 
@@ -16,6 +17,8 @@ type Config struct {
 	MysqlConfig mysql.Config `config:"mysql"`
 
 	ProductsClientConfig httpapp.ProductClientConfig `config:"products_client"`
+
+	TelegramConfig telegram.Config `config:"telegram"`
 
 	HTTPConfig http.Config `config:"http"`
 }

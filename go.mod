@@ -4,6 +4,7 @@ go 1.24.3
 
 require (
 	github.com/go-sql-driver/mysql v1.9.3
+	github.com/go-telegram/bot v1.15.0
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/viper v1.20.1
