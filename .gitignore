@@ -25,3 +25,5 @@ go.work.sum
 # Editor/IDE
 .idea/
 .vscode/
+
+cmd/api/config.yaml
