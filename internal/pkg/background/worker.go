@@ -27,6 +27,28 @@ func NewWorker(logger log.Logger, closerStack CloserStack) *Worker {
 	return w
 }
 
+func (w *Worker) Run(ctx context.Context, name string, handler HandlerFunc) {
+	w.mu.Lock()
+	w.wg.Add(1)
+	w.mu.Unlock()
+
+	go func(ctx context.Context, handler HandlerFunc) {
+		defer w.wg.Done()
+		start := time.Now()
+
+		if err := handler(ctx); err != nil {
+			if errors.Is(err, context.Canceled) {
+				w.logger.Debug().Str("worker", name).Str("duration", time.Since(start).String()).Send()
+				w.logger.Info().Str("worker", name).Msg("worker canceled")
+				return
+			}
+			w.logger.Error().Err(err).Str("worker", name).Msg("worker error")
+		}
+
+		w.logger.Debug().Str("worker", name).Str("duration", time.Since(start).String()).Send()
+	}(ctx, handler)
+}
+
 func (w *Worker) RunWithInterval(ctx context.Context, name string, interval time.Duration, handler HandlerFunc) {
 	w.mu.Lock()
 	w.wg.Add(1)
