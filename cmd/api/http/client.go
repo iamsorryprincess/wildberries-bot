@@ -138,10 +138,11 @@ func (c *ProductClient) GetProducts(_ context.Context, request model.ProductsReq
 		}
 
 		product := model.Product{
-			ID:     item.ID,
-			Name:   item.Name,
-			Rating: item.Rating,
-			URL:    fmt.Sprintf(c.config.ProductURL, item.ID),
+			ID:         item.ID,
+			CategoryID: request.CategoryID,
+			Name:       item.Name,
+			Rating:     item.Rating,
+			URL:        fmt.Sprintf(c.config.ProductURL, item.ID),
 
 			Brand:   item.Brand,
 			BrandID: item.BrandID,

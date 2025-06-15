@@ -12,28 +12,45 @@ type ProductClient interface {
 	GetProducts(ctx context.Context, request model.ProductsRequest) ([]model.Product, error)
 }
 
+type CategoryRepository interface {
+	GetCategory(ctx context.Context, id uint64) (model.Category, error)
+}
+
 type ProductUpdateRepository interface {
 	Update(ctx context.Context, products []model.Product) error
 }
 
 type ProductUpdateService struct {
-	logger     log.Logger
-	client     ProductClient
-	repository ProductUpdateRepository
+	logger             log.Logger
+	client             ProductClient
+	categoryRepository CategoryRepository
+	productRepository  ProductUpdateRepository
 }
 
-func NewUpdateService(logger log.Logger, client ProductClient, repository ProductUpdateRepository) *ProductUpdateService {
+func NewUpdateService(
+	logger log.Logger,
+	client ProductClient,
+	categoryRepository CategoryRepository,
+	productRepository ProductUpdateRepository,
+) *ProductUpdateService {
 	return &ProductUpdateService{
-		logger:     logger,
-		client:     client,
-		repository: repository,
+		logger:             logger,
+		client:             client,
+		categoryRepository: categoryRepository,
+		productRepository:  productRepository,
 	}
 }
 
-func (s *ProductUpdateService) Update(ctx context.Context) error {
+func (s *ProductUpdateService) Update(ctx context.Context, categoryID uint64) error {
+	category, err := s.categoryRepository.GetCategory(ctx, categoryID)
+	if err != nil {
+		return err
+	}
+
 	request := model.ProductsRequest{
-		Page:     1,
-		Category: model.ProductCategoryDresses,
+		Page:       1,
+		Category:   category.Name,
+		CategoryID: categoryID,
 	}
 
 	for {
@@ -51,7 +68,7 @@ func (s *ProductUpdateService) Update(ctx context.Context) error {
 			return nil
 		}
 
-		if err = s.repository.Update(ctx, products); err != nil {
+		if err = s.productRepository.Update(ctx, products); err != nil {
 			return err
 		}
 

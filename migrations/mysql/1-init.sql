@@ -1,5 +1,15 @@
+CREATE TABLE IF NOT EXISTS categories (
+  `id` BIGINT UNSIGNED AUTO_INCREMENT NOT NULL PRIMARY KEY,
+  `name` VARCHAR(20) NOT NULL UNIQUE,
+  `title` VARCHAR(100) NOT NULL,
+  `emoji` VARCHAR(10) NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT NOW(),
+  `updated_at` DATETIME NULL
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = COMPRESSED KEY_BLOCK_SIZE = 8;
+
 CREATE TABLE IF NOT EXISTS products (
   `id` BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+  `category_id` BIGINT UNSIGNED NOT NULL,
   `name` VARCHAR(100) NOT NULL,
   `rating` DECIMAL(2, 1) NOT NULL DEFAULT 0,
   `url` VARCHAR(100) NOT NULL,
@@ -7,7 +17,9 @@ CREATE TABLE IF NOT EXISTS products (
   `brand_id` BIGINT UNSIGNED NOT NULL,
   `colors` JSON NOT NULL,
   `created_at` DATETIME NOT NULL DEFAULT NOW(),
-  `updated_at` DATETIME NULL
+  `updated_at` DATETIME NULL,
+  INDEX `index_category_id` (category_id),
+  FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = COMPRESSED KEY_BLOCK_SIZE = 8;
 
 CREATE TABLE IF NOT EXISTS products_sizes (
@@ -22,3 +34,8 @@ CREATE TABLE IF NOT EXISTS products_sizes (
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
   UNIQUE KEY `uk_product_size` (`product_id`, `name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = COMPRESSED KEY_BLOCK_SIZE = 8;
+
+insert into
+  categories (name, title, emoji)
+values
+  ('dresses', 'Платья', '👗');

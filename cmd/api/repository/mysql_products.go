@@ -27,6 +27,7 @@ func (r *MysqlProductRepository) Update(ctx context.Context, products []model.Pr
 	const insertProductsSQL = `insert into
   products (
     id,
+	category_id,
     name,
     rating,
     url,
@@ -35,7 +36,7 @@ func (r *MysqlProductRepository) Update(ctx context.Context, products []model.Pr
     colors,
     created_at
   ) values `
-	const insertProductsValuesStmt = "(?, ?, ?, ?, ?, ?, ?, NOW())"
+	const insertProductsValuesStmt = "(?, ?, ?, ?, ?, ?, ?, ?, NOW())"
 
 	const insertProductSizesSQL = `insert into
   products_sizes (
@@ -50,7 +51,7 @@ func (r *MysqlProductRepository) Update(ctx context.Context, products []model.Pr
 
 	var insertProductsBuilder strings.Builder
 	insertProductsBuilder.WriteString(insertProductsSQL)
-	productArgs := make([]interface{}, 0, len(products)*7)
+	productArgs := make([]interface{}, 0, len(products)*8)
 
 	var insertSizesBuilder strings.Builder
 	insertSizesBuilder.WriteString(insertProductSizesSQL)
@@ -69,7 +70,7 @@ func (r *MysqlProductRepository) Update(ctx context.Context, products []model.Pr
 		}
 
 		insertProductsBuilder.WriteString(insertProductsValuesStmt)
-		productArgs = append(productArgs, product.ID, product.Name, product.Rating, product.URL, product.Brand, product.BrandID, string(colorsJSON))
+		productArgs = append(productArgs, product.ID, product.CategoryID, product.Name, product.Rating, product.URL, product.Brand, product.BrandID, string(colorsJSON))
 
 		for _, size := range product.Sizes {
 			if sizesIndex > 0 {
@@ -102,4 +103,41 @@ func (r *MysqlProductRepository) Update(ctx context.Context, products []model.Pr
 	}
 
 	return nil
+}
+
+func (r *MysqlProductRepository) GetSizes(ctx context.Context, category string) ([]string, error) {
+	const query = `select ps.name, count(ps.name) as c
+from products_sizes as ps
+left join products as p on p.id = ps.product_id
+left join categories as cat on cat.id = p.category_id
+where cat.name = ?
+group by ps.name
+having c >= ?;`
+
+	const itemsCount = 100
+
+	rows, err := r.conn.QueryContext(ctx, query, category, itemsCount)
+	if err != nil {
+		return nil, fmt.Errorf("mysql products repository: failed get sizes: %w", err)
+	}
+
+	defer r.conn.CloseRows(rows)
+
+	var sizes []string
+	for rows.Next() {
+		var size string
+		var count int
+
+		if err = rows.Scan(&size, &count); err != nil {
+			return nil, fmt.Errorf("mysql products repository: failed scan get sizes row: %w", err)
+		}
+
+		sizes = append(sizes, size)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("mysql products repository: get sizes rows error: %w", err)
+	}
+
+	return sizes, nil
 }

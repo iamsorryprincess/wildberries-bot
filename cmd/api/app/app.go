@@ -27,7 +27,8 @@ type App struct {
 
 	mysqlConn *mysql.Connection
 
-	productRepository *repository.MysqlProductRepository
+	categoryRepository *repository.MysqlCategoryRepository
+	productRepository  *repository.MysqlProductRepository
 
 	productClient *httptransport.ProductClient
 
@@ -99,12 +100,13 @@ func (a *App) initDatabases() error {
 }
 
 func (a *App) initRepositories() {
+	a.categoryRepository = repository.NewMysqlCategoryRepository(a.logger, a.mysqlConn)
 	a.productRepository = repository.NewMysqlProductRepository(a.logger, a.mysqlConn)
 }
 
 func (a *App) initServices() {
 	a.productClient = httptransport.NewProductClient(a.logger, a.config.ProductsClientConfig)
-	a.productUpdateService = service.NewUpdateService(a.logger, a.productClient, a.productRepository)
+	a.productUpdateService = service.NewUpdateService(a.logger, a.productClient, a.categoryRepository, a.productRepository)
 }
 
 func (a *App) initTelegram() error {
@@ -117,12 +119,22 @@ func (a *App) initTelegram() error {
 	}
 
 	a.botClient = botClient
-	telegramtransport.InitHandlers(a.logger, a.botClient)
+	telegramtransport.InitHandlers(a.logger, a.botClient, a.categoryRepository, a.productRepository)
 	a.botClient.Start(a.ctx, a.closeStack)
 	return nil
 }
 
 func (a *App) initWorkers() {
 	a.worker = background.NewWorker(a.logger, a.closeStack)
-	// a.worker.RunWithInterval(a.ctx, "update products", time.Minute*15, a.productUpdateService.Update)
+
+	//categories, err := a.categoryRepository.GetCategories(a.ctx)
+	//if err != nil {
+	//	a.logger.Error().Err(err).Msg("get categories failed")
+	//}
+
+	//for _, category := range categories {
+	//	a.worker.RunWithInterval(a.ctx, fmt.Sprintf("update %s products", category.Name), time.Minute*15, func(ctx context.Context) error {
+	//		return a.productUpdateService.Update(ctx, category.ID)
+	//	})
+	//}
 }
