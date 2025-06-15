@@ -6,8 +6,14 @@ import (
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/telegram"
 )
 
-func InitHandlers(logger log.Logger, client *telegram.BotClient, categoryRepository CategoryRepository, productRepository ProductRepository) {
-	tracking := newTrackingHandler(logger, categoryRepository, productRepository)
+func InitHandlers(
+	logger log.Logger,
+	client *telegram.BotClient,
+	categoryRepository CategoryRepository,
+	productRepository ProductRepository,
+	trackingRepository TrackingRepository,
+) {
+	tracking := newTrackingHandler(logger, categoryRepository, productRepository, trackingRepository)
 
 	client.RegisterHandler(bot.HandlerTypeMessageText, "/addtracking", bot.MatchTypeExact, tracking.ShowCategoryTrackingOptions)
 	client.RegisterHandler(bot.HandlerTypeCallbackQueryData, trackingCategoriesURL, bot.MatchTypePrefix, tracking.ShowSizeTrackingOptions)

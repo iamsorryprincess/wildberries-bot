@@ -30,18 +30,29 @@ type ProductRepository interface {
 	GetSizes(ctx context.Context, category string) ([]string, error)
 }
 
+type TrackingRepository interface {
+	AddTracking(ctx context.Context, settings model.TrackingSettings) error
+}
+
 type trackingHandler struct {
 	logger log.Logger
 
 	categoryRepository CategoryRepository
 	productRepository  ProductRepository
+	trackingRepository TrackingRepository
 }
 
-func newTrackingHandler(logger log.Logger, categoryRepository CategoryRepository, productRepository ProductRepository) *trackingHandler {
+func newTrackingHandler(
+	logger log.Logger,
+	categoryRepository CategoryRepository,
+	productRepository ProductRepository,
+	trackingRepository TrackingRepository,
+) *trackingHandler {
 	return &trackingHandler{
 		logger:             logger,
 		categoryRepository: categoryRepository,
 		productRepository:  productRepository,
+		trackingRepository: trackingRepository,
 	}
 }
 
@@ -190,6 +201,7 @@ func (h *trackingHandler) ShowDiffPriceOptions(ctx context.Context, b *bot.Bot, 
 	}
 
 	index := strings.Index(data, "/")
+	category := data[:index]
 	sizeStr := data[index+1:]
 	emojiSeparatorIndex := strings.Index(sizeStr, ":")
 	size := sizeStr[:emojiSeparatorIndex]
@@ -204,34 +216,34 @@ func (h *trackingHandler) ShowDiffPriceOptions(ctx context.Context, b *bot.Bot, 
 		ReplyMarkup: &models.InlineKeyboardMarkup{
 			InlineKeyboard: [][]models.InlineKeyboardButton{
 				{
-					{Text: "5%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "5", size, categoryTitle, categoryEmoji)},
-					{Text: "10%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "10", size, categoryTitle, categoryEmoji)},
-					{Text: "15%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "15", size, categoryTitle, categoryEmoji)},
-					{Text: "20%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "20", size, categoryTitle, categoryEmoji)},
+					{Text: "5%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "5", size, categoryTitle, categoryEmoji, category)},
+					{Text: "10%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "10", size, categoryTitle, categoryEmoji, category)},
+					{Text: "15%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "15", size, categoryTitle, categoryEmoji, category)},
+					{Text: "20%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "20", size, categoryTitle, categoryEmoji, category)},
 				},
 				{
-					{Text: "25%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "25", size, categoryTitle, categoryEmoji)},
-					{Text: "30%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "30", size, categoryTitle, categoryEmoji)},
-					{Text: "35%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "35", size, categoryTitle, categoryEmoji)},
-					{Text: "40%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "40", size, categoryTitle, categoryEmoji)},
+					{Text: "25%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "25", size, categoryTitle, categoryEmoji, category)},
+					{Text: "30%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "30", size, categoryTitle, categoryEmoji, category)},
+					{Text: "35%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "35", size, categoryTitle, categoryEmoji, category)},
+					{Text: "40%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "40", size, categoryTitle, categoryEmoji, category)},
 				},
 				{
-					{Text: "45%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "45", size, categoryTitle, categoryEmoji)},
-					{Text: "50%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "50", size, categoryTitle, categoryEmoji)},
-					{Text: "55%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "55", size, categoryTitle, categoryEmoji)},
-					{Text: "60%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "60", size, categoryTitle, categoryEmoji)},
+					{Text: "45%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "45", size, categoryTitle, categoryEmoji, category)},
+					{Text: "50%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "50", size, categoryTitle, categoryEmoji, category)},
+					{Text: "55%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "55", size, categoryTitle, categoryEmoji, category)},
+					{Text: "60%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "60", size, categoryTitle, categoryEmoji, category)},
 				},
 				{
-					{Text: "65%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "65", size, categoryTitle, categoryEmoji)},
-					{Text: "70%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "70", size, categoryTitle, categoryEmoji)},
-					{Text: "75%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "75", size, categoryTitle, categoryEmoji)},
-					{Text: "80%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "80", size, categoryTitle, categoryEmoji)},
+					{Text: "65%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "65", size, categoryTitle, categoryEmoji, category)},
+					{Text: "70%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "70", size, categoryTitle, categoryEmoji, category)},
+					{Text: "75%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "75", size, categoryTitle, categoryEmoji, category)},
+					{Text: "80%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "80", size, categoryTitle, categoryEmoji, category)},
 				},
 				{
-					{Text: "85%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "85", size, categoryTitle, categoryEmoji)},
-					{Text: "90%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "90", size, categoryTitle, categoryEmoji)},
-					{Text: "95%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "95", size, categoryTitle, categoryEmoji)},
-					{Text: "100%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s", addTrackingURL, "100", size, categoryTitle, categoryEmoji)},
+					{Text: "85%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "85", size, categoryTitle, categoryEmoji, category)},
+					{Text: "90%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "90", size, categoryTitle, categoryEmoji, category)},
+					{Text: "95%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "95", size, categoryTitle, categoryEmoji, category)},
+					{Text: "100%", CallbackData: fmt.Sprintf("%s%s/%s:%s:%s:%s", addTrackingURL, "100", size, categoryTitle, categoryEmoji, category)},
 				},
 			},
 		},
@@ -269,14 +281,49 @@ func (h *trackingHandler) AddTracking(ctx context.Context, b *bot.Bot, update *m
 		return
 	}
 
-	sizeStr := data[index+1:]
-	emojiSeparatorIndex := strings.Index(sizeStr, ":")
-	size := sizeStr[:emojiSeparatorIndex]
-	categoryDataStr := sizeStr[emojiSeparatorIndex+1:]
-	dataIndex := strings.Index(categoryDataStr, ":")
-	categoryTitle := categoryDataStr[:dataIndex]
-	categoryEmoji := categoryDataStr[dataIndex+1:]
 	chatID := update.CallbackQuery.Message.Message.Chat.ID
+	sizeStr := data[index+1:]
+	trackingParams := strings.Split(sizeStr, ":")
+	if len(trackingParams) < 4 {
+		h.logger.Error().Str("params_str", sizeStr).Msg("invalid tracking params count")
+		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.CallbackQuery.Message.Message.Chat.ID,
+			Text:   "К сожалению не удалось добавить настройку отслеживания, попробуйте позже, мы уже чиним поломку :С",
+		})
+		if err != nil {
+			h.logger.Error().Err(err).
+				Str("handler", "AddTrackingSize").
+				Int64("chat_id", chatID).
+				Msg("failed send message")
+		}
+		return
+	}
+
+	size := trackingParams[0]
+	categoryTitle := trackingParams[1]
+	categoryEmoji := trackingParams[2]
+	categoryName := trackingParams[3]
+
+	trackingSettings := model.TrackingSettings{
+		ChatID:    chatID,
+		Size:      size,
+		Category:  categoryName,
+		DiffValue: diffPercent,
+	}
+
+	if err = h.trackingRepository.AddTracking(ctx, trackingSettings); err != nil {
+		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.CallbackQuery.Message.Message.Chat.ID,
+			Text:   "К сожалению не удалось добавить настройку отслеживания, попробуйте позже, мы уже чиним поломку :С",
+		})
+		if err != nil {
+			h.logger.Error().Err(err).
+				Str("handler", "AddTrackingSize").
+				Int64("chat_id", chatID).
+				Msg("failed send message")
+		}
+		return
+	}
 
 	const messageText = `Вы добавили настройки отслеживания для следующих параметров:
 <b>Категория</b>: <i>%s</i> %s
