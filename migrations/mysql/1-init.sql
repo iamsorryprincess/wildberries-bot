@@ -35,6 +35,17 @@ CREATE TABLE IF NOT EXISTS products_sizes (
   UNIQUE KEY `uk_product_size` (`product_id`, `name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = COMPRESSED KEY_BLOCK_SIZE = 8;
 
+CREATE TABLE IF NOT EXISTS tracking_settings (
+  `chat_id` BIGINT SIGNED NOT NULL,
+  `size` VARCHAR(100) NOT NULL,
+  `category` VARCHAR(20) NOT NULL,
+  `diff_value` TINYINT UNSIGNED NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT NOW(),
+  `updated_at` DATETIME NULL,
+  INDEX `index_chat_id` (chat_id),
+  UNIQUE KEY `uk_tracking_chat_product_size` (`chat_id`, `size`, `category`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = COMPRESSED KEY_BLOCK_SIZE = 8;
+
 insert into
   categories (name, title, emoji)
 values

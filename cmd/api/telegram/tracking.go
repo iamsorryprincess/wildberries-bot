@@ -312,6 +312,7 @@ func (h *trackingHandler) AddTracking(ctx context.Context, b *bot.Bot, update *m
 	}
 
 	if err = h.trackingRepository.AddTracking(ctx, trackingSettings); err != nil {
+		h.logger.Error().Err(err).Int64("chat_id", chatID).Msg("failed add tracking settings")
 		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.CallbackQuery.Message.Message.Chat.ID,
 			Text:   "К сожалению не удалось добавить настройку отслеживания, попробуйте позже, мы уже чиним поломку :С",
