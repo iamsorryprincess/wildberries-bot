@@ -11,5 +11,6 @@ func InitHandlers(logger log.Logger, client *telegram.BotClient, categoryReposit
 
 	client.RegisterHandler(bot.HandlerTypeMessageText, "/addtracking", bot.MatchTypeExact, tracking.ShowCategoryTrackingOptions)
 	client.RegisterHandler(bot.HandlerTypeCallbackQueryData, trackingCategoriesURL, bot.MatchTypePrefix, tracking.ShowSizeTrackingOptions)
-	client.RegisterHandler(bot.HandlerTypeCallbackQueryData, trackingSizesURL, bot.MatchTypePrefix, tracking.AddTrackingSize)
+	client.RegisterHandler(bot.HandlerTypeCallbackQueryData, showDiffPricesURL, bot.MatchTypePrefix, tracking.ShowDiffPriceOptions)
+	client.RegisterHandler(bot.HandlerTypeCallbackQueryData, addTrackingURL, bot.MatchTypePrefix, tracking.AddTracking)
 }
