@@ -41,13 +41,18 @@ func (r *MysqlProductRepository) Update(ctx context.Context, products []model.Pr
 	const insertProductSizesSQL = `insert into
   products_sizes (
     product_id,
-    name,
+    size_id,
     first_price,
     previous_price,
     current_price,
     created_at
   ) values `
 	const insertProductSizesValuesStmt = "(?, ?, ?, ?, ?, NOW())"
+
+	sizesMap, err := r.updateSizes(ctx, products)
+	if err != nil {
+		return err
+	}
 
 	var insertProductsBuilder strings.Builder
 	insertProductsBuilder.WriteString(insertProductsSQL)
@@ -78,7 +83,7 @@ func (r *MysqlProductRepository) Update(ctx context.Context, products []model.Pr
 			}
 
 			insertSizesBuilder.WriteString(insertProductSizesValuesStmt)
-			sizeArgs = append(sizeArgs, product.ID, size.Name, size.CurrentPrice, size.CurrentPrice, size.CurrentPrice)
+			sizeArgs = append(sizeArgs, product.ID, sizesMap[size.Name], size.CurrentPrice, size.CurrentPrice, size.CurrentPrice)
 			sizesIndex++
 		}
 	}
@@ -86,8 +91,7 @@ func (r *MysqlProductRepository) Update(ctx context.Context, products []model.Pr
 	const duplicateProductsStmt = " on duplicate key update updated_at = NOW();"
 	insertProductsBuilder.WriteString(duplicateProductsStmt)
 
-	productsQuery := insertProductsBuilder.String()
-	if _, err := r.conn.ExecContext(ctx, productsQuery, productArgs...); err != nil {
+	if _, err := r.conn.ExecContext(ctx, insertProductsBuilder.String(), productArgs...); err != nil {
 		return fmt.Errorf("mysql products repository: failed exec insert products: %w", err)
 	}
 
@@ -97,12 +101,79 @@ func (r *MysqlProductRepository) Update(ctx context.Context, products []model.Pr
   updated_at = NOW();`
 	insertSizesBuilder.WriteString(duplicateSizesStmt)
 
-	sizesQuery := insertSizesBuilder.String()
-	if _, err := r.conn.ExecContext(ctx, sizesQuery, sizeArgs...); err != nil {
+	if _, err := r.conn.ExecContext(ctx, insertSizesBuilder.String(), sizeArgs...); err != nil {
 		return fmt.Errorf("mysql products repository: failed exec insert product sizes: %w", err)
 	}
 
 	return nil
+}
+
+func (r *MysqlProductRepository) updateSizes(ctx context.Context, products []model.Product) (map[string]uint64, error) {
+	const insertQuery = "insert into sizes (name, created_at) values "
+	const onDuplicateStmt = " on duplicate key update updated_at = NOW()"
+	const selectQuery = "select id, name from sizes where name in ("
+
+	var insertBuilder strings.Builder
+	var selectBuilder strings.Builder
+
+	var args []interface{}
+	sizeMap := make(map[string]uint64)
+	insertBuilder.WriteString(insertQuery)
+	selectBuilder.WriteString(selectQuery)
+	i := 0
+
+	for _, product := range products {
+		for _, size := range product.Sizes {
+			_, ok := sizeMap[size.Name]
+			if !ok {
+				sizeMap[size.Name] = 0
+
+				if i > 0 {
+					insertBuilder.WriteString(", ")
+					selectBuilder.WriteString(", ")
+				}
+
+				insertBuilder.WriteString("(?, NOW())")
+				selectBuilder.WriteString("?")
+				args = append(args, size.Name)
+				i++
+			}
+		}
+	}
+
+	insertBuilder.WriteString(onDuplicateStmt)
+
+	if len(sizeMap) > 1 {
+		selectBuilder.WriteString(")")
+	}
+
+	if _, err := r.conn.ExecContext(ctx, insertBuilder.String(), args...); err != nil {
+		return nil, fmt.Errorf("mysql insert sizes error: %w", err)
+	}
+
+	rows, err := r.conn.QueryContext(ctx, selectBuilder.String(), args...)
+	if err != nil {
+		return nil, fmt.Errorf("mysql select sizes error: %w", err)
+	}
+
+	defer r.conn.CloseRows(rows)
+
+	for rows.Next() {
+		var id uint64
+		var name string
+
+		if err = rows.Scan(&id, &name); err != nil {
+			return nil, fmt.Errorf("mysql scan sizes row error: %w", err)
+		}
+
+		sizeMap[name] = id
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("mysql select sizes rows error: %w", err)
+	}
+
+	return sizeMap, nil
 }
 
 func (r *MysqlProductRepository) GetSizes(ctx context.Context, category string) ([]string, error) {

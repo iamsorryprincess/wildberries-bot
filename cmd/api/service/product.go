@@ -112,9 +112,9 @@ func (s *ProductService) UpdateProducts(ctx context.Context, categoryID uint64) 
 		return err
 	}
 
-	if err = s.trackingNotifier.SendNotifications(ctx, category.Name); err != nil {
-		return err
-	}
+	//if err = s.trackingNotifier.SendNotifications(ctx, category.Name); err != nil {
+	//	return err
+	//}
 
 	return nil
 }

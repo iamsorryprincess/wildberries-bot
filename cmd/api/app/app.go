@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/iamsorryprincess/wildberries-bot/cmd/api/config"
 	httptransport "github.com/iamsorryprincess/wildberries-bot/cmd/api/http"
@@ -134,7 +135,5 @@ func (a *App) initWorkers() {
 		a.productRepository,
 		a.trackingService,
 	)
-	// a.worker.RunWithInterval(a.ctx, "run updates", time.Minute*15, a.productService.RunUpdateWorkers)
-
-	a.trackingService.SendNotifications(a.ctx, "dresses")
+	a.worker.RunWithInterval(a.ctx, "run updates", time.Minute*15, a.productService.RunUpdateWorkers)
 }
