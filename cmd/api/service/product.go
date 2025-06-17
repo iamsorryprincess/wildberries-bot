@@ -27,12 +27,20 @@ type ProductUpdateRepository interface {
 	Update(ctx context.Context, products []model.Product) error
 }
 
+type TrackingNotifier interface {
+	SendNotifications(ctx context.Context, categoryID uint64) error
+}
+
 type ProductService struct {
-	logger             log.Logger
-	workerPool         WorkerPool
-	client             ProductClient
+	logger log.Logger
+
+	workerPool WorkerPool
+	client     ProductClient
+
 	categoryRepository CategoryRepository
 	productRepository  ProductUpdateRepository
+
+	trackingNotifier TrackingNotifier
 }
 
 func NewProductService(
@@ -41,6 +49,7 @@ func NewProductService(
 	client ProductClient,
 	categoryRepository CategoryRepository,
 	productRepository ProductUpdateRepository,
+	trackingNotifier TrackingNotifier,
 ) *ProductService {
 	return &ProductService{
 		logger:             logger,
@@ -48,6 +57,7 @@ func NewProductService(
 		client:             client,
 		categoryRepository: categoryRepository,
 		productRepository:  productRepository,
+		trackingNotifier:   trackingNotifier,
 	}
 }
 
@@ -81,22 +91,30 @@ func (s *ProductService) UpdateProducts(ctx context.Context, categoryID uint64) 
 	for {
 		s.logger.Debug().Int("page", request.Page).Msg("products request")
 
-		products, err := s.client.GetProducts(ctx, request)
+		var products []model.Product
+		products, err = s.client.GetProducts(ctx, request)
 		if err != nil {
-			if errors.Is(err, model.ErrRequestLimit) {
-				return nil
-			}
-			return err
+			break
 		}
 
 		if len(products) == 0 {
-			return nil
+			break
 		}
 
 		if err = s.productRepository.Update(ctx, products); err != nil {
-			return err
+			break
 		}
 
 		request.Page++
 	}
+
+	if err != nil && !errors.Is(err, model.ErrRequestLimit) {
+		return err
+	}
+
+	if err = s.trackingNotifier.SendNotifications(ctx, category.ID); err != nil {
+		return err
+	}
+
+	return nil
 }

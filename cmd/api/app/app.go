@@ -29,13 +29,16 @@ type App struct {
 
 	categoryRepository *repository.MysqlCategoryRepository
 	productRepository  *repository.MysqlProductRepository
+	sizeRepository     *repository.MysqlSizeRepository
 	trackingRepository *repository.MysqlTrackingRepository
 
 	productClient *httptransport.ProductClient
+	botClient     *telegram.BotClient
 
-	productService *service.ProductService
+	sender *telegramtransport.Sender
 
-	botClient *telegram.BotClient
+	trackingService *service.TrackingService
+	productService  *service.ProductService
 
 	worker *background.Worker
 }
@@ -101,6 +104,7 @@ func (a *App) initDatabases() error {
 func (a *App) initRepositories() {
 	a.categoryRepository = repository.NewMysqlCategoryRepository(a.logger, a.mysqlConn)
 	a.productRepository = repository.NewMysqlProductRepository(a.logger, a.mysqlConn)
+	a.sizeRepository = repository.NewMysqlSizeRepository(a.mysqlConn)
 	a.trackingRepository = repository.NewMysqlTrackingRepository(a.logger, a.mysqlConn)
 }
 
@@ -114,7 +118,8 @@ func (a *App) initTelegram() error {
 	}
 
 	a.botClient = botClient
-	telegramtransport.InitHandlers(a.logger, a.botClient, a.categoryRepository, a.productRepository, a.trackingRepository)
+	telegramtransport.InitHandlers(a.logger, a.botClient, a.categoryRepository, a.sizeRepository, a.trackingRepository)
+	a.sender = telegramtransport.NewSender(a.botClient)
 	a.botClient.Start(a.ctx, a.closeStack)
 	return nil
 }
@@ -122,6 +127,15 @@ func (a *App) initTelegram() error {
 func (a *App) initWorkers() {
 	a.worker = background.NewWorker(a.logger, a.closeStack)
 	a.productClient = httptransport.NewProductClient(a.logger, a.config.ProductsClientConfig)
-	a.productService = service.NewProductService(a.logger, a.worker, a.productClient, a.categoryRepository, a.productRepository)
+	a.trackingService = service.NewTrackingService(a.logger, a.trackingRepository, a.sender)
+	a.productService = service.NewProductService(
+		a.logger,
+		a.worker,
+		a.productClient,
+		a.categoryRepository,
+		a.productRepository,
+		a.trackingService,
+	)
 	// a.worker.RunWithInterval(a.ctx, "run updates", time.Minute*15, a.productService.RunUpdateWorkers)
+	// a.trackingService.SendNotifications(a.ctx, 1)
 }
