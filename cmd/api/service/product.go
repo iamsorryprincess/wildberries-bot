@@ -28,7 +28,7 @@ type ProductUpdateRepository interface {
 }
 
 type TrackingNotifier interface {
-	SendNotifications(ctx context.Context, category string) error
+	SendNotifications(ctx context.Context, categoryID uint64) error
 }
 
 type ProductService struct {
@@ -112,9 +112,9 @@ func (s *ProductService) UpdateProducts(ctx context.Context, categoryID uint64) 
 		return err
 	}
 
-	//if err = s.trackingNotifier.SendNotifications(ctx, category.Name); err != nil {
-	//	return err
-	//}
+	if err = s.trackingNotifier.SendNotifications(ctx, category.ID); err != nil {
+		return err
+	}
 
 	return nil
 }

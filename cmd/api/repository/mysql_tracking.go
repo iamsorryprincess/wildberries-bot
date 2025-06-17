@@ -38,11 +38,11 @@ update
 	return nil
 }
 
-func (r *MysqlTrackingRepository) FindMatchTracking(ctx context.Context, category string) ([]model.TrackingResult, error) {
+func (r *MysqlTrackingRepository) FindMatchTracking(ctx context.Context, categoryID uint64) ([]model.TrackingResult, error) {
 	const query = `select
   p.name,
   p.url,
-  ps.name,
+  s.name,
   FORMAT(ps.previous_price, 2) as previous_price,
   FORMAT(ps.current_price, 2) as current_price,
   ROUND(((ps.previous_price - ps.current_price) / ps.previous_price * 100)) as diff_percent,
@@ -50,12 +50,13 @@ func (r *MysqlTrackingRepository) FindMatchTracking(ctx context.Context, categor
 from
   products_sizes as ps
   join products as p on p.id = ps.product_id
-  join tracking_settings as ts on ts.size = ps.name
+  join tracking_settings as ts on ts.size_id = ps.size_id
+  join sizes as s on s.id = ts.size_id
 where
-  ts.category = ?
+  ts.category_id = ?
   AND ROUND(((ps.previous_price - ps.current_price) / ps.previous_price * 100)) >= ts.diff_value;`
 
-	rows, err := r.conn.QueryContext(ctx, query, category)
+	rows, err := r.conn.QueryContext(ctx, query, categoryID)
 	if err != nil {
 		return nil, fmt.Errorf("mysql query find match tracking error: %w", err)
 	}

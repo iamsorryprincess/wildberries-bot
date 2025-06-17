@@ -137,4 +137,5 @@ func (a *App) initWorkers() {
 		a.trackingService,
 	)
 	// a.worker.RunWithInterval(a.ctx, "run updates", time.Minute*15, a.productService.RunUpdateWorkers)
+	// a.trackingService.SendNotifications(a.ctx, 1)
 }

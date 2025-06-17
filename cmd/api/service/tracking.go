@@ -8,7 +8,7 @@ import (
 )
 
 type TrackingRepository interface {
-	FindMatchTracking(ctx context.Context, category string) ([]model.TrackingResult, error)
+	FindMatchTracking(ctx context.Context, categoryID uint64) ([]model.TrackingResult, error)
 }
 
 type NotificationSender interface {
@@ -29,8 +29,8 @@ func NewTrackingService(logger log.Logger, trackingRepository TrackingRepository
 	}
 }
 
-func (s *TrackingService) SendNotifications(ctx context.Context, category string) error {
-	trackingResults, err := s.trackingRepository.FindMatchTracking(ctx, category)
+func (s *TrackingService) SendNotifications(ctx context.Context, categoryID uint64) error {
+	trackingResults, err := s.trackingRepository.FindMatchTracking(ctx, categoryID)
 	if err != nil {
 		return err
 	}
