@@ -1,10 +1,10 @@
 package model
 
 type TrackingSettings struct {
-	ChatID    int64  `json:"chatId"`
-	Size      string `json:"size"`
-	Category  string `json:"category"`
-	DiffValue int    `json:"diffValue"`
+	ChatID     int64  `json:"chatId"`
+	SizeID     uint64 `json:"sizeId"`
+	CategoryID uint64 `json:"categoryId"`
+	DiffValue  int    `json:"diffValue"`
 }
 
 type TrackingResult struct {

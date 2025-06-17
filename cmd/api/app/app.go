@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"time"
 
 	"github.com/iamsorryprincess/wildberries-bot/cmd/api/config"
 	httptransport "github.com/iamsorryprincess/wildberries-bot/cmd/api/http"
@@ -30,6 +29,7 @@ type App struct {
 
 	categoryRepository *repository.MysqlCategoryRepository
 	productRepository  *repository.MysqlProductRepository
+	sizeRepository     *repository.MysqlSizeRepository
 	trackingRepository *repository.MysqlTrackingRepository
 
 	productClient *httptransport.ProductClient
@@ -104,6 +104,7 @@ func (a *App) initDatabases() error {
 func (a *App) initRepositories() {
 	a.categoryRepository = repository.NewMysqlCategoryRepository(a.logger, a.mysqlConn)
 	a.productRepository = repository.NewMysqlProductRepository(a.logger, a.mysqlConn)
+	a.sizeRepository = repository.NewMysqlSizeRepository(a.mysqlConn)
 	a.trackingRepository = repository.NewMysqlTrackingRepository(a.logger, a.mysqlConn)
 }
 
@@ -117,7 +118,7 @@ func (a *App) initTelegram() error {
 	}
 
 	a.botClient = botClient
-	telegramtransport.InitHandlers(a.logger, a.botClient, a.categoryRepository, a.productRepository, a.trackingRepository)
+	telegramtransport.InitHandlers(a.logger, a.botClient, a.categoryRepository, a.sizeRepository, a.trackingRepository)
 	a.sender = telegramtransport.NewSender(a.botClient)
 	a.botClient.Start(a.ctx, a.closeStack)
 	return nil
@@ -135,5 +136,5 @@ func (a *App) initWorkers() {
 		a.productRepository,
 		a.trackingService,
 	)
-	a.worker.RunWithInterval(a.ctx, "run updates", time.Minute*15, a.productService.RunUpdateWorkers)
+	// a.worker.RunWithInterval(a.ctx, "run updates", time.Minute*15, a.productService.RunUpdateWorkers)
 }
