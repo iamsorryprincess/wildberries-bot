@@ -40,11 +40,14 @@ update
 
 func (r *MysqlTrackingRepository) FindMatchTracking(ctx context.Context, categoryID uint64) ([]model.TrackingResult, error) {
 	const query = `select
+  ps.product_id,
   p.name,
   p.url,
+  ps.size_id,
   s.name,
-  FORMAT(ps.previous_price, 2) as previous_price,
-  FORMAT(ps.current_price, 2) as current_price,
+  ps.previous_price,
+  ps.current_price,
+  ps.current_price_int,
   ROUND(((ps.previous_price - ps.current_price) / ps.previous_price * 100)) as diff_percent,
   ts.chat_id
 from
@@ -52,9 +55,11 @@ from
   join products as p on p.id = ps.product_id
   join tracking_settings as ts on ts.size_id = ps.size_id
   join sizes as s on s.id = ts.size_id
+  left join tracking_logs as tl on tl.chat_id = ts.chat_id and tl.size_id = ts.size_id and tl.product_id = ps.product_id
 where
-  ts.category_id = ?
-  AND ROUND(((ps.previous_price - ps.current_price) / ps.previous_price * 100)) >= ts.diff_value;`
+  ts.category_id = ? and
+  tl.price <> ps.current_price_int and
+  ROUND(((ps.previous_price - ps.current_price) / ps.previous_price * 100)) >= ts.diff_value;`
 
 	rows, err := r.conn.QueryContext(ctx, query, categoryID)
 	if err != nil {
@@ -68,11 +73,14 @@ where
 		var trackingResult model.TrackingResult
 
 		if err = rows.Scan(
+			&trackingResult.ProductID,
 			&trackingResult.ProductName,
 			&trackingResult.ProductURL,
+			&trackingResult.SizeID,
 			&trackingResult.Size,
 			&trackingResult.PreviousPrice,
 			&trackingResult.CurrentPrice,
+			&trackingResult.CurrentPriceInt,
 			&trackingResult.DiffPercent,
 			&trackingResult.ChatID,
 		); err != nil {
@@ -87,4 +95,21 @@ where
 	}
 
 	return result, nil
+}
+
+func (r *MysqlTrackingRepository) SaveTrackingLog(ctx context.Context, log model.TrackingLog) error {
+	const query = `insert into
+  tracking_logs (chat_id, size_id, product_id, price)
+values
+  (?, ?, ?, ?) as new_values on duplicate key
+update
+  price = new_values.price,
+  updated_at = NOW();`
+
+	_, err := r.conn.ExecContext(ctx, query, log.ChatID, log.SizeID, log.ProductID, log.Price)
+	if err != nil {
+		return fmt.Errorf("mysql insert tracking error: %w", err)
+	}
+
+	return nil
 }

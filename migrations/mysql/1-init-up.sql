@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS products_sizes (
   `first_price` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
   `previous_price` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
   `current_price` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+  `current_price_int` BIGINT UNSIGNED NOT NULL DEFAULT 0,
   `created_at` DATETIME NOT NULL,
   `updated_at` DATETIME NULL,
   INDEX `index_product_id` (product_id),
@@ -53,7 +54,22 @@ CREATE TABLE IF NOT EXISTS tracking_settings (
   `created_at` DATETIME NOT NULL DEFAULT NOW(),
   `updated_at` DATETIME NULL,
   INDEX `index_chat_id` (chat_id),
+  FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+  FOREIGN KEY (size_id) REFERENCES sizes(id) ON DELETE CASCADE,
   UNIQUE KEY `uk_tracking_chat_product_size` (`chat_id`, `size_id`, `category_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = COMPRESSED KEY_BLOCK_SIZE = 8;
+
+CREATE TABLE IF NOT EXISTS tracking_logs (
+  `chat_id` BIGINT SIGNED NOT NULL,
+  `size_id` BIGINT UNSIGNED NOT NULL,
+  `product_id` BIGINT UNSIGNED NOT NULL,
+  `price` BIGINT UNSIGNED NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT NOW(),
+  `updated_at` DATETIME NULL,
+  INDEX `index_chat_id` (chat_id),
+  FOREIGN KEY (size_id) REFERENCES sizes(id) ON DELETE CASCADE,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  UNIQUE KEY `uk_tracking_logs_chat_size_product` (`chat_id`, `size_id`, `product_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = COMPRESSED KEY_BLOCK_SIZE = 8;
 
 insert into

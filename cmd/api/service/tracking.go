@@ -9,6 +9,7 @@ import (
 
 type TrackingRepository interface {
 	FindMatchTracking(ctx context.Context, categoryID uint64) ([]model.TrackingResult, error)
+	SaveTrackingLog(ctx context.Context, log model.TrackingLog) error
 }
 
 type NotificationSender interface {
@@ -44,6 +45,22 @@ func (s *TrackingService) SendNotifications(ctx context.Context, categoryID uint
 			s.logger.Error().Err(err).
 				Int64("chat_id", tracking.ChatID).
 				Msg("failed send notification about tracking result")
+			continue
+		}
+
+		trackingLog := model.TrackingLog{
+			ChatID:    tracking.ChatID,
+			SizeID:    tracking.SizeID,
+			ProductID: tracking.ProductID,
+			Price:     tracking.CurrentPriceInt,
+		}
+
+		if err = s.trackingRepository.SaveTrackingLog(ctx, trackingLog); err != nil {
+			s.logger.Error().Err(err).
+				Int64("chat_id", tracking.ChatID).
+				Uint64("product_id", trackingLog.ProductID).
+				Uint64("size_id", trackingLog.SizeID).
+				Msg("failed save tracking log")
 		}
 	}
 

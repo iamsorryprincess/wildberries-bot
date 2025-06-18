@@ -1,3 +1,4 @@
+drop table tracking_logs;
 drop table tracking_settings;
 drop table products_sizes;
 drop table sizes;

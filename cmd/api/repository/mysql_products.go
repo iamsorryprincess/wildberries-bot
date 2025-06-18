@@ -45,9 +45,10 @@ func (r *MysqlProductRepository) Update(ctx context.Context, products []model.Pr
     first_price,
     previous_price,
     current_price,
+	current_price_int,
     created_at
   ) values `
-	const insertProductSizesValuesStmt = "(?, ?, ?, ?, ?, NOW())"
+	const insertProductSizesValuesStmt = "(?, ?, ?, ?, ?, ?, NOW())"
 
 	sizesMap, err := r.updateSizes(ctx, products)
 	if err != nil {
@@ -83,7 +84,7 @@ func (r *MysqlProductRepository) Update(ctx context.Context, products []model.Pr
 			}
 
 			insertSizesBuilder.WriteString(insertProductSizesValuesStmt)
-			sizeArgs = append(sizeArgs, product.ID, sizesMap[size.Name], size.CurrentPrice, size.CurrentPrice, size.CurrentPrice)
+			sizeArgs = append(sizeArgs, product.ID, sizesMap[size.Name], size.CurrentPrice, size.CurrentPrice, size.CurrentPrice, uint64(size.CurrentPrice))
 			sizesIndex++
 		}
 	}
@@ -98,6 +99,7 @@ func (r *MysqlProductRepository) Update(ctx context.Context, products []model.Pr
 	const duplicateSizesStmt = ` as new_values on duplicate key update
   previous_price = products_sizes.current_price,
   current_price = new_values.current_price,
+  current_price_int = new_values.current_price_int,
   updated_at = NOW();`
 	insertSizesBuilder.WriteString(duplicateSizesStmt)
 

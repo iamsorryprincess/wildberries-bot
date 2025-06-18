@@ -27,9 +27,9 @@ func (s *Sender) Send(ctx context.Context, message model.TrackingResult) error {
 
 <b>Размер:</b> %s
 
-<b>Старая цена:</b> %s
+<b>Старая цена:</b> %.2f
 
-<b>Новая цена:</b> %s
+<b>Новая цена:</b> %.2f
 
 <b>Снижение цены:</b> %d%%`
 	_, err := s.client.SendMessage(ctx, &bot.SendMessageParams{
