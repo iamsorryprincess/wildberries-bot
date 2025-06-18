@@ -110,7 +110,7 @@ func (a *App) initRepositories() {
 }
 
 func (a *App) initTelegram() error {
-	defaultHandlerOption := telegramtransport.NewStartHandlerOption(a.logger)
+	defaultHandlerOption := telegramtransport.NewStartHandlerOption(a.logger, a.trackingRepository)
 
 	botClient, err := telegram.NewBotClient(a.config.TelegramConfig, defaultHandlerOption)
 	if err != nil {

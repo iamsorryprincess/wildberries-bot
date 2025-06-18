@@ -13,13 +13,19 @@ const (
 	botUsername  = "WBDPBOT"
 )
 
-type startHandler struct {
-	logger log.Logger
+type DeleteTrackingRepository interface {
+	DeleteTrackingSettingsByChat(ctx context.Context, chatID int64) error
 }
 
-func NewStartHandlerOption(logger log.Logger) bot.Option {
+type startHandler struct {
+	logger     log.Logger
+	repository DeleteTrackingRepository
+}
+
+func NewStartHandlerOption(logger log.Logger, repository DeleteTrackingRepository) bot.Option {
 	handler := &startHandler{
-		logger: logger,
+		logger:     logger,
+		repository: repository,
 	}
 	return bot.WithDefaultHandler(handler.Handle)
 }
@@ -30,7 +36,6 @@ func (h *startHandler) Handle(ctx context.Context, b *bot.Bot, update *models.Up
 Вы можете управлять мной, отправляя следующие команды:
 
 /addtracking - добавляет отслеживание
-/edittracking - редактирует настройки отслеживания
 /deletetracking - удаляет отслеживание
 /showtracking - показывает текущие настройки отслеживания`
 
@@ -40,7 +45,10 @@ func (h *startHandler) Handle(ctx context.Context, b *bot.Bot, update *models.Up
 				if user := banned.User; user != nil && banned.Status == statusKicked && user.Username == botUsername {
 					chatID := chatMember.Chat.ID
 					h.logger.Info().Int64("chat_id", chatID).Msg("bot was banned by user")
-					// TODO удалить все настройки по чату
+
+					if err := h.repository.DeleteTrackingSettingsByChat(ctx, chatID); err != nil {
+						h.logger.Error().Err(err).Int64("chat_id", chatID).Msg("failed remove tracking settings")
+					}
 				}
 			}
 		}

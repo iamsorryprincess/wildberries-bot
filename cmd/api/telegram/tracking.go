@@ -16,6 +16,7 @@ const (
 	trackingCategoriesURL = "/trackingcategories/"
 	showDiffPricesURL     = "/showdiffprices/"
 	addTrackingURL        = "/addtracking/"
+	deleteTrackingURL     = "/deletetracking/"
 
 	buttonsPerMessage = 20
 	buttonsPerRow     = 4
@@ -33,6 +34,8 @@ type SizeRepository interface {
 
 type TrackingRepository interface {
 	AddTracking(ctx context.Context, settings model.TrackingSettings) error
+	GetTrackingSettingsInfo(ctx context.Context, chatID int64) ([]model.TrackingSettingsInfo, error)
+	DeleteTrackingSettings(ctx context.Context, chatID int64, sizeID uint64, categoryID uint64) error
 }
 
 type trackingHandler struct {
@@ -385,7 +388,7 @@ func (h *trackingHandler) AddTracking(ctx context.Context, b *bot.Bot, update *m
 	const messageText = `Вы добавили настройки отслеживания для следующих параметров:
 <b>Категория</b>: <i>%s</i> %s
 <b>Размер</b>: <i>%s</i> 📏
-<b>Снижение цены</b>: <i>%d%%</i>`
+<b>Снижение цены</b>: <i>%d%%</i> ⬇️`
 
 	sizeData, err := h.sizeRepository.GetSizeCategoryInfo(ctx, sizeID, categoryID)
 	if err != nil {
@@ -401,6 +404,195 @@ func (h *trackingHandler) AddTracking(ctx context.Context, b *bot.Bot, update *m
 	if err != nil {
 		h.logger.Error().Err(err).
 			Str("handler", "AddTrackingSize").
+			Int64("chat_id", chatID).
+			Msg("failed send message")
+	}
+}
+
+func (h *trackingHandler) ShowTrackingSettings(ctx context.Context, b *bot.Bot, update *models.Update) {
+	chatID := update.Message.Chat.ID
+	trackingSettings, err := h.trackingRepository.GetTrackingSettingsInfo(ctx, chatID)
+	if err != nil || len(trackingSettings) == 0 {
+		h.logger.Error().Err(err).Str("handler", "ShowTrackingSettings").Msg("get tracking settings failed failed")
+
+		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "К сожалению пока данный функционал недоступен, попробуйте позже :С",
+		})
+		if err != nil {
+			h.logger.Error().Err(err).
+				Str("handler", "ShowTrackingSettings").
+				Int64("chat_id", chatID).
+				Msg("failed send message")
+		}
+
+		return
+	}
+
+	const messageText = `<b>Категория</b>: <i>%s</i> %s
+<b>Размер</b>: <i>%s</i> 📏
+<b>Снижение цены</b>: <i>%d%%</i> ⬇️`
+
+	var sb strings.Builder
+	sb.WriteString("Ваши текущие настройки отслеживания:")
+
+	for _, settings := range trackingSettings {
+		sb.WriteString("\n\n")
+		sb.WriteString(fmt.Sprintf(messageText, settings.CategoryTitle, settings.CategoryEmoji, settings.Size, settings.DiffPercent))
+	}
+
+	_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID:    chatID,
+		Text:      sb.String(),
+		ParseMode: models.ParseModeHTML,
+	})
+	if err != nil {
+		h.logger.Error().Err(err).
+			Str("handler", "ShowTrackingSettings").
+			Int64("chat_id", chatID).
+			Msg("failed send message")
+	}
+}
+
+func (h *trackingHandler) ShowDeleteTrackingSettings(ctx context.Context, b *bot.Bot, update *models.Update) {
+	chatID := update.Message.Chat.ID
+	trackingSettings, err := h.trackingRepository.GetTrackingSettingsInfo(ctx, chatID)
+	if err != nil || len(trackingSettings) == 0 {
+		h.logger.Error().Err(err).Str("handler", "ShowDeleteTrackingSettings").Msg("get tracking settings failed failed")
+
+		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "К сожалению пока данный функционал недоступен, попробуйте позже :С",
+		})
+		if err != nil {
+			h.logger.Error().Err(err).
+				Str("handler", "ShowDeleteTrackingSettings").
+				Int64("chat_id", chatID).
+				Msg("failed send message")
+		}
+
+		return
+	}
+
+	const msgText = "❌   %s %s %s 📏 %d%% ⬇️"
+
+	var rows [][]models.InlineKeyboardButton
+	for _, settings := range trackingSettings {
+		rows = append(rows, []models.InlineKeyboardButton{{
+			Text:         fmt.Sprintf(msgText, settings.CategoryTitle, settings.CategoryEmoji, settings.Size, settings.DiffPercent),
+			CallbackData: fmt.Sprintf("%s%d:%d", deleteTrackingURL, settings.CategoryID, settings.SizeID),
+		}})
+	}
+
+	_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: chatID,
+		Text:   "Выберите настройку для удаления:",
+		ReplyMarkup: &models.InlineKeyboardMarkup{
+			InlineKeyboard: rows,
+		},
+	})
+	if err != nil {
+		h.logger.Error().Err(err).
+			Str("handler", "ShowDeleteTrackingSettings").
+			Int64("chat_id", chatID).
+			Msg("failed send message")
+	}
+}
+
+func (h *trackingHandler) DeleteTrackingSettings(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update.CallbackQuery == nil {
+		h.logger.Error().Str("handler", "DeleteTrackingSettings").Msg("callback query is empty")
+		return
+	}
+
+	data, isFound := strings.CutPrefix(update.CallbackQuery.Data, deleteTrackingURL)
+	if !isFound {
+		h.logger.Error().Str("handler", "DeleteTrackingSettings").
+			Str("callback_data", update.CallbackQuery.Data).
+			Msg("can't extract data from callback query data")
+		return
+	}
+
+	chatID := update.CallbackQuery.Message.Message.Chat.ID
+	values := strings.Split(data, ":")
+	if len(values) < 2 {
+		h.logger.Error().Str("handler", "DeleteTrackingSettings").Msg("get tracking settings failed failed")
+
+		_, err := b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "К сожалению пока данный функционал недоступен, попробуйте позже :С",
+		})
+		if err != nil {
+			h.logger.Error().Err(err).
+				Str("handler", "DeleteTrackingSettings").
+				Int64("chat_id", chatID).
+				Msg("failed send message")
+		}
+
+		return
+	}
+
+	categoryID, err := strconv.ParseUint(values[0], 10, 64)
+	if err != nil {
+		h.logger.Error().Str("handler", "DeleteTrackingSettings").
+			Str("callback_data", update.CallbackQuery.Data).
+			Msg("can't parse category_id from callback query data")
+		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "К сожалению не удалось удалить настройку отслеживания, попробуйте позже, мы уже чиним поломку :С",
+		})
+		if err != nil {
+			h.logger.Error().Err(err).
+				Str("handler", "DeleteTrackingSettings").
+				Int64("chat_id", chatID).
+				Msg("failed send message")
+		}
+		return
+	}
+
+	sizeID, err := strconv.ParseUint(values[1], 10, 64)
+	if err != nil {
+		h.logger.Error().Str("handler", "DeleteTrackingSettings").
+			Str("callback_data", update.CallbackQuery.Data).
+			Msg("can't parse size_id from callback query data")
+		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "К сожалению не удалось удалить настройку отслеживания, попробуйте позже, мы уже чиним поломку :С",
+		})
+		if err != nil {
+			h.logger.Error().Err(err).
+				Str("handler", "DeleteTrackingSettings").
+				Int64("chat_id", chatID).
+				Msg("failed send message")
+		}
+		return
+	}
+
+	if err = h.trackingRepository.DeleteTrackingSettings(ctx, chatID, sizeID, categoryID); err != nil {
+		h.logger.Error().Err(err).
+			Str("handler", "DeleteTrackingSettings").
+			Int64("chat_id", chatID).
+			Msg("failed delete tracking settings")
+		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "К сожалению не удалось удалить настройку отслеживания, попробуйте позже, мы уже чиним поломку :С",
+		})
+		if err != nil {
+			h.logger.Error().Err(err).
+				Str("handler", "DeleteTrackingSettings").
+				Int64("chat_id", chatID).
+				Msg("failed send message")
+		}
+		return
+	}
+
+	_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: chatID,
+		Text:   "Настройка успешно удалена",
+	})
+	if err != nil {
+		h.logger.Error().Err(err).
+			Str("handler", "DeleteTrackingSettings").
 			Int64("chat_id", chatID).
 			Msg("failed send message")
 	}

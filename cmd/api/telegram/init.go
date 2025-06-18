@@ -19,4 +19,9 @@ func InitHandlers(
 	client.RegisterHandler(bot.HandlerTypeCallbackQueryData, trackingCategoriesURL, bot.MatchTypePrefix, tracking.ShowSizeTrackingOptions)
 	client.RegisterHandler(bot.HandlerTypeCallbackQueryData, showDiffPricesURL, bot.MatchTypePrefix, tracking.ShowDiffPriceOptions)
 	client.RegisterHandler(bot.HandlerTypeCallbackQueryData, addTrackingURL, bot.MatchTypePrefix, tracking.AddTracking)
+
+	client.RegisterHandler(bot.HandlerTypeMessageText, "/showtracking", bot.MatchTypeExact, tracking.ShowTrackingSettings)
+
+	client.RegisterHandler(bot.HandlerTypeMessageText, "/deletetracking", bot.MatchTypeExact, tracking.ShowDeleteTrackingSettings)
+	client.RegisterHandler(bot.HandlerTypeCallbackQueryData, deleteTrackingURL, bot.MatchTypePrefix, tracking.DeleteTrackingSettings)
 }

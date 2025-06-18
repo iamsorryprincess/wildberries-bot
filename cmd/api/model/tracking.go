@@ -26,3 +26,13 @@ type TrackingLog struct {
 	ProductID uint64
 	Price     uint64
 }
+
+type TrackingSettingsInfo struct {
+	ChatID        int64  `json:"chatId"`
+	CategoryID    uint64 `json:"categoryId"`
+	CategoryTitle string `json:"categoryTitle"`
+	CategoryEmoji string `json:"categoryEmoji"`
+	SizeID        uint64 `json:"sizeId"`
+	Size          string `json:"size"`
+	DiffPercent   int    `json:"diffPercent"`
+}
