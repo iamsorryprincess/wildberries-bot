@@ -412,8 +412,8 @@ func (h *trackingHandler) AddTracking(ctx context.Context, b *bot.Bot, update *m
 func (h *trackingHandler) ShowTrackingSettings(ctx context.Context, b *bot.Bot, update *models.Update) {
 	chatID := update.Message.Chat.ID
 	trackingSettings, err := h.trackingRepository.GetTrackingSettingsInfo(ctx, chatID)
-	if err != nil || len(trackingSettings) == 0 {
-		h.logger.Error().Err(err).Str("handler", "ShowTrackingSettings").Msg("get tracking settings failed failed")
+	if err != nil {
+		h.logger.Error().Err(err).Str("handler", "ShowTrackingSettings").Msg("get tracking settings failed")
 
 		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
@@ -426,6 +426,20 @@ func (h *trackingHandler) ShowTrackingSettings(ctx context.Context, b *bot.Bot, 
 				Msg("failed send message")
 		}
 
+		return
+	}
+
+	if len(trackingSettings) == 0 {
+		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "На данный момент у вас отсутствуют настройки отслеживания",
+		})
+		if err != nil {
+			h.logger.Error().Err(err).
+				Str("handler", "ShowTrackingSettings").
+				Int64("chat_id", chatID).
+				Msg("failed send message")
+		}
 		return
 	}
 
@@ -457,8 +471,8 @@ func (h *trackingHandler) ShowTrackingSettings(ctx context.Context, b *bot.Bot, 
 func (h *trackingHandler) ShowDeleteTrackingSettings(ctx context.Context, b *bot.Bot, update *models.Update) {
 	chatID := update.Message.Chat.ID
 	trackingSettings, err := h.trackingRepository.GetTrackingSettingsInfo(ctx, chatID)
-	if err != nil || len(trackingSettings) == 0 {
-		h.logger.Error().Err(err).Str("handler", "ShowDeleteTrackingSettings").Msg("get tracking settings failed failed")
+	if err != nil {
+		h.logger.Error().Err(err).Str("handler", "ShowDeleteTrackingSettings").Msg("get tracking settings failed")
 
 		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
@@ -471,6 +485,20 @@ func (h *trackingHandler) ShowDeleteTrackingSettings(ctx context.Context, b *bot
 				Msg("failed send message")
 		}
 
+		return
+	}
+
+	if len(trackingSettings) == 0 {
+		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "На данный момент у вас отсутствуют настройки отслеживания",
+		})
+		if err != nil {
+			h.logger.Error().Err(err).
+				Str("handler", "ShowTrackingSettings").
+				Int64("chat_id", chatID).
+				Msg("failed send message")
+		}
 		return
 	}
 
@@ -516,7 +544,7 @@ func (h *trackingHandler) DeleteTrackingSettings(ctx context.Context, b *bot.Bot
 	chatID := update.CallbackQuery.Message.Message.Chat.ID
 	values := strings.Split(data, ":")
 	if len(values) < 2 {
-		h.logger.Error().Str("handler", "DeleteTrackingSettings").Msg("get tracking settings failed failed")
+		h.logger.Error().Str("handler", "DeleteTrackingSettings").Msg("get tracking settings failed")
 
 		_, err := b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
