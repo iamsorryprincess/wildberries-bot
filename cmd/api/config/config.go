@@ -14,6 +14,8 @@ import (
 type Config struct {
 	LogLevel string `config:"loglevel"`
 
+	ParseInterval time.Duration `config:"parse_interval"`
+
 	MysqlConfig mysql.Config `config:"mysql"`
 
 	ProductsClientConfig httpapp.ProductClientConfig `config:"products_client"`
@@ -26,6 +28,7 @@ type Config struct {
 func Init() (Config, error) {
 	return config.Load[Config](func() {
 		viper.SetDefault("loglevel", "info")
+		viper.SetDefault("parse_interval", "15m")
 
 		viper.SetDefault("mysql.max_open_connections", 5)
 		viper.SetDefault("mysql.max_idle_connections", 5)
