@@ -1,0 +1,15 @@
+[Unit]
+Description=WBDP API Service
+After=network.target mysql.service
+Requires=mysql.service
+
+[Service]
+Type=simple
+User=wbdp
+Group=wbdp
+WorkingDirectory=/
+ExecStart=/usr/local/bin/wbdpapi -config /etc/wbdp/api/config.yaml
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
