@@ -4,6 +4,9 @@ lint:
 docker-build-api:
 	docker build -f cmd/api/Dockerfile --build-arg PORT=8080 -t wildberries-bot/api .
 
+build-api:
+	sh scripts/build.sh
+
 # Dev
 # Backend dev dir
 backend_dev_dir = deploy/dev

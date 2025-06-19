@@ -27,3 +27,4 @@ go.work.sum
 .vscode/
 
 cmd/api/config.yaml
+bin
