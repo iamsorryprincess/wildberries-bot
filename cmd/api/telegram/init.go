@@ -1,6 +1,8 @@
 package telegram
 
 import (
+	"runtime/debug"
+
 	"github.com/go-telegram/bot"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/log"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/telegram"
@@ -24,4 +26,21 @@ func InitHandlers(
 
 	client.RegisterHandler(bot.HandlerTypeMessageText, "/deletetracking", bot.MatchTypeExact, tracking.ShowDeleteTrackingSettings)
 	client.RegisterHandler(bot.HandlerTypeCallbackQueryData, deleteTrackingURL, bot.MatchTypePrefix, tracking.DeleteTrackingSettings)
+}
+
+func recovery(logger log.Logger, handlerName string) {
+	if rvr := recover(); rvr != nil {
+		event := logger.Error().
+			Str("handler", handlerName).
+			Str("stack", string(debug.Stack()))
+
+		err, ok := rvr.(error)
+		if ok {
+			event = event.Err(err)
+		} else {
+			event = event.Interface("panic", rvr)
+		}
+
+		event.Msg("recovered from panic")
+	}
 }

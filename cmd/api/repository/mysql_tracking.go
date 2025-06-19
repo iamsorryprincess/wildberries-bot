@@ -58,7 +58,7 @@ from
   left join tracking_logs as tl on tl.chat_id = ts.chat_id and tl.size_id = ts.size_id and tl.product_id = ps.product_id
 where
   ts.category_id = ? and
-  tl.price <> ps.current_price_int and
+  (tl.price is NULL or tl.price <> ps.current_price_int) and
   ROUND(((ps.previous_price - ps.current_price) / ps.previous_price * 100)) >= ts.diff_value;`
 
 	rows, err := r.conn.QueryContext(ctx, query, categoryID)

@@ -61,6 +61,8 @@ func newTrackingHandler(
 }
 
 func (h *trackingHandler) ShowCategoryTrackingOptions(ctx context.Context, b *bot.Bot, update *models.Update) {
+	defer recovery(h.logger, "ShowCategoryTrackingOptions")
+
 	categories, err := h.categoryRepository.GetCategories(ctx)
 	if err != nil || len(categories) == 0 {
 		h.logger.Error().Err(err).Str("handler", "ShowCategoryTrackingOptions").Msg("get categories failed")
@@ -105,6 +107,8 @@ func (h *trackingHandler) ShowCategoryTrackingOptions(ctx context.Context, b *bo
 }
 
 func (h *trackingHandler) ShowSizeTrackingOptions(ctx context.Context, b *bot.Bot, update *models.Update) {
+	defer recovery(h.logger, "ShowSizeTrackingOptions")
+
 	if update.CallbackQuery == nil {
 		h.logger.Error().Str("handler", "ShowSizeTrackingOptions").Msg("callback query is empty")
 		return
@@ -198,6 +202,8 @@ func (h *trackingHandler) ShowSizeTrackingOptions(ctx context.Context, b *bot.Bo
 }
 
 func (h *trackingHandler) ShowDiffPriceOptions(ctx context.Context, b *bot.Bot, update *models.Update) {
+	defer recovery(h.logger, "ShowDiffPriceOptions")
+
 	if update.CallbackQuery == nil {
 		h.logger.Error().Str("handler", "ShowDiffPriceOptions").Msg("callback query is empty")
 		return
@@ -283,6 +289,8 @@ func (h *trackingHandler) ShowDiffPriceOptions(ctx context.Context, b *bot.Bot, 
 }
 
 func (h *trackingHandler) AddTracking(ctx context.Context, b *bot.Bot, update *models.Update) {
+	defer recovery(h.logger, "AddTrackingSize")
+
 	if update.CallbackQuery == nil {
 		h.logger.Error().Str("handler", "AddTrackingSize").Msg("callback query is empty")
 		return
@@ -410,6 +418,8 @@ func (h *trackingHandler) AddTracking(ctx context.Context, b *bot.Bot, update *m
 }
 
 func (h *trackingHandler) ShowTrackingSettings(ctx context.Context, b *bot.Bot, update *models.Update) {
+	defer recovery(h.logger, "ShowTrackingSettings")
+
 	chatID := update.Message.Chat.ID
 	trackingSettings, err := h.trackingRepository.GetTrackingSettingsInfo(ctx, chatID)
 	if err != nil {
@@ -469,6 +479,8 @@ func (h *trackingHandler) ShowTrackingSettings(ctx context.Context, b *bot.Bot, 
 }
 
 func (h *trackingHandler) ShowDeleteTrackingSettings(ctx context.Context, b *bot.Bot, update *models.Update) {
+	defer recovery(h.logger, "ShowDeleteTrackingSettings")
+
 	chatID := update.Message.Chat.ID
 	trackingSettings, err := h.trackingRepository.GetTrackingSettingsInfo(ctx, chatID)
 	if err != nil {
@@ -528,6 +540,8 @@ func (h *trackingHandler) ShowDeleteTrackingSettings(ctx context.Context, b *bot
 }
 
 func (h *trackingHandler) DeleteTrackingSettings(ctx context.Context, b *bot.Bot, update *models.Update) {
+	defer recovery(h.logger, "DeleteTrackingSettings")
+
 	if update.CallbackQuery == nil {
 		h.logger.Error().Str("handler", "DeleteTrackingSettings").Msg("callback query is empty")
 		return

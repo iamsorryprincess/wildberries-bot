@@ -31,6 +31,8 @@ func NewStartHandlerOption(logger log.Logger, repository DeleteTrackingRepositor
 }
 
 func (h *startHandler) Handle(ctx context.Context, b *bot.Bot, update *models.Update) {
+	defer recovery(h.logger, "start")
+
 	const message = `Я могу помочь вам создать и управлять настройками отслеживания цен товаров Wildberries.
 
 Вы можете управлять мной, отправляя следующие команды:
