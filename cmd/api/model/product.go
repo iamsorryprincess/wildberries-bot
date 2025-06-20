@@ -8,6 +8,8 @@ type ProductsRequest struct {
 	Page       int    `json:"page"`
 	Category   string `json:"category"`
 	CategoryID uint64 `json:"category_id"`
+	RequestURL string `json:"requestUrl"`
+	ProductURL string `json:"productUrl"`
 }
 
 type ProductSize struct {

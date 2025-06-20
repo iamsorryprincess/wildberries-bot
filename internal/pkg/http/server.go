@@ -12,12 +12,12 @@ import (
 
 type Server struct {
 	logger    log.Logger
-	config    Config
+	config    ServerConfig
 	appErrors background.AppErrors
 	server    *http.Server
 }
 
-func NewServer(logger log.Logger, config Config, closerStack background.CloserStack, appErrors background.AppErrors, handler http.Handler) *Server {
+func NewServer(logger log.Logger, config ServerConfig, closerStack background.CloserStack, appErrors background.AppErrors, handler http.Handler) *Server {
 	server := &Server{
 		logger:    logger,
 		config:    config,

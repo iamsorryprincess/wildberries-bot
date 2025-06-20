@@ -10,6 +10,7 @@ import (
 	telegramtransport "github.com/iamsorryprincess/wildberries-bot/cmd/api/telegram"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/background"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/database/mysql"
+	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/http"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/log"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/telegram"
 )
@@ -126,12 +127,11 @@ func (a *App) initTelegram() error {
 
 func (a *App) initWorkers() {
 	a.worker = background.NewWorker(a.logger, a.closeStack)
-	a.productClient = httptransport.NewProductClient(a.logger, a.config.ProductsClientConfig)
+	a.productClient = httptransport.NewProductClient(a.logger, a.config.ProductsClientConfig, http.NewClient(a.config.HTTPClientConfig))
 	a.trackingService = service.NewTrackingService(a.logger, a.trackingRepository, a.sender)
 
 	a.productService = service.NewProductService(
 		a.logger,
-		a.worker,
 		a.productClient,
 		a.categoryRepository,
 		a.productRepository,

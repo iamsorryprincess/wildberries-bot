@@ -3,6 +3,8 @@ CREATE TABLE IF NOT EXISTS categories (
   `name` VARCHAR(20) NOT NULL UNIQUE,
   `title` VARCHAR(100) NOT NULL,
   `emoji` VARCHAR(10) NOT NULL,
+  `request_url` VARCHAR(200) NOT NULL,
+  `product_url` VARCHAR(200) NOT NULL,
   `created_at` DATETIME NOT NULL DEFAULT NOW(),
   `updated_at` DATETIME NULL
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = COMPRESSED KEY_BLOCK_SIZE = 8;
@@ -73,7 +75,19 @@ CREATE TABLE IF NOT EXISTS tracking_logs (
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = COMPRESSED KEY_BLOCK_SIZE = 8;
 
 insert into
-  categories (name, title, emoji)
+  categories (name, title, emoji, request_url, product_url)
 values
-  ('dresses', 'Платья', '👗'),
-  ('bl_shirts', 'Блузки и рубашки', '👚');
+  (
+    'dresses',
+    'Платья',
+    '👗',
+    'https://catalog.wb.ru/catalog/%s/v2/catalog?ab_testing=false&appType=1&cat=8137&curr=rub&dest=-1257786&hide_dtype=13&lang=ru&page=%d&sort=popular&spp=30',
+    'https://www.wildberries.ru/catalog/%d/detail.aspx'
+  ),
+  (
+    'bl_shirts',
+    'Блузки и рубашки',
+    '👚',
+    'https://catalog.wb.ru/catalog/%s/v2/catalog?ab_testing=false&appType=1&cat=8126&curr=rub&dest=-5892277&hide_dtype=13&lang=ru&page=%d&sort=popular&spp=30',
+    'https://www.wildberries.ru/catalog/%d/detail.aspx'
+  );

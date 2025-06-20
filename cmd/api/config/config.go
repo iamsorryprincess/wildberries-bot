@@ -18,11 +18,13 @@ type Config struct {
 
 	MysqlConfig mysql.Config `config:"mysql"`
 
+	HTTPClientConfig http.ClientConfig `config:"http_client"`
+
 	ProductsClientConfig httpapp.ProductClientConfig `config:"products_client"`
 
 	TelegramConfig telegram.Config `config:"telegram"`
 
-	HTTPConfig http.Config `config:"http"`
+	HTTPConfig http.ServerConfig `config:"http"`
 }
 
 func Init() (Config, error) {
@@ -32,8 +34,18 @@ func Init() (Config, error) {
 
 		viper.SetDefault("mysql.max_open_connections", 5)
 		viper.SetDefault("mysql.max_idle_connections", 5)
-		viper.SetDefault("mysql.connection_max_lifetime", time.Minute*5)
-		viper.SetDefault("mysql.connection_max_idle_time", time.Minute*5)
+		viper.SetDefault("mysql.connection_max_lifetime", 5*time.Minute)
+		viper.SetDefault("mysql.connection_max_idle_time", 5*time.Minute)
+
+		viper.SetDefault("http_client.timeout", 30*time.Second)
+		viper.SetDefault("http_client.dial_timeout", 5*time.Second)
+		viper.SetDefault("http_client.dial_keep_alive", 30*time.Second)
+		viper.SetDefault("http_client.max_idle_conns", 10)
+		viper.SetDefault("http_client.max_idle_conns_per_host", 10)
+		viper.SetDefault("http_client.idle_conn_timeout", 90*time.Second)
+		viper.SetDefault("http_client.tls_handshake_timeout", 10*time.Second)
+		viper.SetDefault("http_client.response_header_timeout", 5*time.Second)
+		viper.SetDefault("http_client.expect_continue_timeout", 1*time.Second)
 
 		viper.SetDefault("products_client.retry_count", 3)
 		viper.SetDefault("products_client.retry_delay", time.Second)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -13,9 +14,6 @@ import (
 )
 
 type ProductClientConfig struct {
-	RequestURL string `config:"request_url"`
-	ProductURL string `config:"product_url"`
-
 	RetryCount uint          `config:"retry_count"`
 	RetryDelay time.Duration `config:"retry_delay"`
 }
@@ -26,11 +24,11 @@ type ProductClient struct {
 	client *http.Client
 }
 
-func NewProductClient(logger log.Logger, config ProductClientConfig) *ProductClient {
+func NewProductClient(logger log.Logger, config ProductClientConfig, httpClient *http.Client) *ProductClient {
 	return &ProductClient{
 		logger: logger,
 		config: config,
-		client: &http.Client{},
+		client: httpClient,
 	}
 }
 
@@ -66,7 +64,7 @@ type response struct {
 }
 
 func (c *ProductClient) GetProducts(_ context.Context, request model.ProductsRequest) ([]model.Product, error) {
-	url := fmt.Sprintf(c.config.RequestURL, request.Category, request.Page)
+	url := fmt.Sprintf(request.RequestURL, request.Category, request.Page)
 	httpRequest, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ProductClient.GetData making http request error: %w", err)
@@ -122,6 +120,13 @@ func (c *ProductClient) GetProducts(_ context.Context, request model.ProductsReq
 		if httpResponse.StatusCode == http.StatusTooManyRequests {
 			return nil, model.ErrRequestLimit
 		}
+
+		body, rErr := io.ReadAll(httpResponse.Body)
+		if rErr != nil {
+			c.logger.Error().Err(rErr).Msg("ProductClient.GetData failed to read response body")
+		}
+
+		c.logger.Error().Int("status", httpResponse.StatusCode).Str("body", string(body)).Send()
 		return nil, fmt.Errorf("ProductClient.GetData http status is not ok; status: %d", httpResponse.StatusCode)
 	}
 
@@ -142,7 +147,7 @@ func (c *ProductClient) GetProducts(_ context.Context, request model.ProductsReq
 			CategoryID: request.CategoryID,
 			Name:       item.Name,
 			Rating:     item.Rating,
-			URL:        fmt.Sprintf(c.config.ProductURL, item.ID),
+			URL:        fmt.Sprintf(request.ProductURL, item.ID),
 
 			Brand:   item.Brand,
 			BrandID: item.BrandID,

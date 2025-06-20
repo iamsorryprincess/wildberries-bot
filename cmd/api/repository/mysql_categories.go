@@ -22,7 +22,7 @@ func NewMysqlCategoryRepository(logger log.Logger, conn *mysql.Connection) *Mysq
 }
 
 func (r *MysqlCategoryRepository) GetCategories(ctx context.Context) ([]model.Category, error) {
-	const query = "select id, name, title, emoji from categories;"
+	const query = "select id, name, title, emoji, request_url, product_url from categories;"
 
 	rows, err := r.conn.QueryContext(ctx, query)
 	if err != nil {
@@ -35,7 +35,14 @@ func (r *MysqlCategoryRepository) GetCategories(ctx context.Context) ([]model.Ca
 	for rows.Next() {
 		var category model.Category
 
-		if err = rows.Scan(&category.ID, &category.Name, &category.Title, &category.Emoji); err != nil {
+		if err = rows.Scan(
+			&category.ID,
+			&category.Name,
+			&category.Title,
+			&category.Emoji,
+			&category.RequestURL,
+			&category.ProductURL,
+		); err != nil {
 			return nil, fmt.Errorf("mysql scan categories row error: %w", err)
 		}
 
@@ -50,10 +57,17 @@ func (r *MysqlCategoryRepository) GetCategories(ctx context.Context) ([]model.Ca
 }
 
 func (r *MysqlCategoryRepository) GetCategory(ctx context.Context, id uint64) (model.Category, error) {
-	const query = "select id, name, title, emoji from categories where id = ?;"
+	const query = "select id, name, title, emoji, request_url, product_url from categories where id = ?;"
 
 	var category model.Category
-	if err := r.conn.QueryRowContext(ctx, query, id).Scan(&category.ID, &category.Name, &category.Title, &category.Emoji); err != nil {
+	if err := r.conn.QueryRowContext(ctx, query, id).Scan(
+		&category.ID,
+		&category.Name,
+		&category.Title,
+		&category.Emoji,
+		&category.RequestURL,
+		&category.ProductURL,
+	); err != nil {
 		return category, fmt.Errorf("mysql get category error: %w", err)
 	}
 

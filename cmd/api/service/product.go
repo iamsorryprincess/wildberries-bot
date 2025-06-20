@@ -3,16 +3,11 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
+	"sync/atomic"
 
 	"github.com/iamsorryprincess/wildberries-bot/cmd/api/model"
-	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/background"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/log"
 )
-
-type WorkerPool interface {
-	Run(ctx context.Context, name string, handler background.HandlerFunc)
-}
 
 type ProductClient interface {
 	GetProducts(ctx context.Context, request model.ProductsRequest) ([]model.Product, error)
@@ -34,8 +29,9 @@ type TrackingNotifier interface {
 type ProductService struct {
 	logger log.Logger
 
-	workerPool WorkerPool
-	client     ProductClient
+	hashCounter uint64
+
+	client ProductClient
 
 	categoryRepository CategoryRepository
 	productRepository  ProductUpdateRepository
@@ -45,7 +41,6 @@ type ProductService struct {
 
 func NewProductService(
 	logger log.Logger,
-	workerPool WorkerPool,
 	client ProductClient,
 	categoryRepository CategoryRepository,
 	productRepository ProductUpdateRepository,
@@ -53,7 +48,6 @@ func NewProductService(
 ) *ProductService {
 	return &ProductService{
 		logger:             logger,
-		workerPool:         workerPool,
 		client:             client,
 		categoryRepository: categoryRepository,
 		productRepository:  productRepository,
@@ -67,26 +61,29 @@ func (s *ProductService) RunUpdateWorkers(ctx context.Context) error {
 		return err
 	}
 
-	for _, category := range categories {
-		s.workerPool.Run(ctx, fmt.Sprintf("update %s products", category.Name), func(ctx context.Context) error {
-			return s.UpdateProducts(ctx, category.ID)
-		})
+	if len(categories) == 0 {
+		s.logger.Warn().Msg("no product categories found")
+		return nil
 	}
 
-	return nil
+	if len(categories) == 1 {
+		return s.UpdateProducts(ctx, categories[0])
+	}
+
+	index := atomic.AddUint64(&s.hashCounter, 1) % uint64(len(categories))
+	return s.UpdateProducts(ctx, categories[index])
 }
 
-func (s *ProductService) UpdateProducts(ctx context.Context, categoryID uint64) error {
-	category, err := s.categoryRepository.GetCategory(ctx, categoryID)
-	if err != nil {
-		return err
-	}
-
+func (s *ProductService) UpdateProducts(ctx context.Context, category model.Category) error {
 	request := model.ProductsRequest{
 		Page:       1,
 		Category:   category.Name,
-		CategoryID: categoryID,
+		CategoryID: category.ID,
+		RequestURL: category.RequestURL,
+		ProductURL: category.ProductURL,
 	}
+
+	var err error
 
 	for {
 		s.logger.Debug().Int("page", request.Page).Msg("products request")
