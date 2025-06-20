@@ -86,8 +86,36 @@ values
   ),
   (
     'bl_shirts',
-    'Блузки и рубашки',
+    'Женские блузки и рубашки',
     '👚',
     'https://catalog.wb.ru/catalog/%s/v2/catalog?ab_testing=false&appType=1&cat=8126&curr=rub&dest=-5892277&hide_dtype=13&lang=ru&page=%d&sort=popular&spp=30',
+    'https://www.wildberries.ru/catalog/%d/detail.aspx'
+  ),
+  (
+    'jumpers_cardigans',
+    'Женские джемперы и кардиганы',
+    '🧥',
+    'https://catalog.wb.ru/catalog/%s/v2/catalog?ab_testing=false&appType=1&cat=8130&curr=rub&dest=-1257786&hide_dtype=13&lang=ru&page=%d&sort=popular&spp=30',
+    'https://www.wildberries.ru/catalog/%d/detail.aspx'
+  ),
+  (
+    'outwear1',
+    'Верхняя женская одежда',
+    '👘',
+    'https://catalog.wb.ru/catalog/%s/v2/catalog?ab_testing=false&appType=1&cat=63010&curr=rub&dest=-1257786&hide_dtype=13&lang=ru&page=%d&sort=popular&spp=30',
+    'https://www.wildberries.ru/catalog/%d/detail.aspx'
+  ),
+  (
+    'jeans',
+    'Женские джинсы',
+    '👖',
+    'https://catalog.wb.ru/catalog/%s/v2/catalog?ab_testing=false&appType=1&cat=8131&curr=rub&dest=-1257786&hide_dtype=13&lang=ru&page=%d&sort=popular&spp=30',
+    'https://www.wildberries.ru/catalog/%d/detail.aspx'
+  ),
+  (
+    'preset_tops_tshirts1',
+    'Женские футболки',
+    '👕',
+    'https://catalog.wb.ru/catalog/%s/v2/catalog?ab_testing=false&appType=1&cat=8142&curr=rub&dest=-1257786&hide_dtype=13&lang=ru&page=%d&sort=popular&spp=30',
     'https://www.wildberries.ru/catalog/%d/detail.aspx'
   );
