@@ -75,4 +75,5 @@ CREATE TABLE IF NOT EXISTS tracking_logs (
 insert into
   categories (name, title, emoji)
 values
-  ('dresses', 'Платья', '👗');
+  ('dresses', 'Платья', '👗'),
+  ('bl_shirts', 'Блузки и рубашки', '👚');

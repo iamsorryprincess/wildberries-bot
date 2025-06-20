@@ -81,21 +81,19 @@ func (h *trackingHandler) ShowCategoryTrackingOptions(ctx context.Context, b *bo
 		return
 	}
 
-	keyboardButtons := make([]models.InlineKeyboardButton, len(categories))
-	for i, category := range categories {
-		keyboardButtons[i] = models.InlineKeyboardButton{
+	var rows [][]models.InlineKeyboardButton
+	for _, category := range categories {
+		rows = append(rows, []models.InlineKeyboardButton{{
 			Text:         fmt.Sprintf("%s %s", category.Emoji, category.Title),
 			CallbackData: fmt.Sprintf("%s%d:%s:%s", trackingCategoriesURL, category.ID, category.Title, category.Emoji),
-		}
+		}})
 	}
 
 	_, err = b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
 		Text:   "Выберите категорию товара для отслеживания:",
 		ReplyMarkup: &models.InlineKeyboardMarkup{
-			InlineKeyboard: [][]models.InlineKeyboardButton{
-				keyboardButtons,
-			},
+			InlineKeyboard: rows,
 		},
 	})
 	if err != nil {
