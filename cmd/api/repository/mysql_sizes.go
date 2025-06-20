@@ -25,7 +25,7 @@ left join products as p on p.id = ps.product_id
 left join sizes as s on s.id = ps.size_id
 where p.category_id = ?
 group by ps.size_id
-having c >= ?`
+having c >= ?;`
 
 	const itemsCount = 100
 

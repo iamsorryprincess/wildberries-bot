@@ -71,7 +71,10 @@ func (s *ProductService) RunUpdateWorkers(ctx context.Context) error {
 	}
 
 	index := atomic.AddUint64(&s.hashCounter, 1) % uint64(len(categories))
-	return s.UpdateProducts(ctx, categories[index])
+	category := categories[index]
+	s.logger.Info().Uint64("index", index).Str("category", category.Name).Send()
+
+	return s.UpdateProducts(ctx, category)
 }
 
 func (s *ProductService) UpdateProducts(ctx context.Context, category model.Category) error {
