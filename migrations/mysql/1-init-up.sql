@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS categories (
   `id` BIGINT UNSIGNED AUTO_INCREMENT NOT NULL PRIMARY KEY,
   `name` VARCHAR(20) NOT NULL UNIQUE,
-  `title` VARCHAR(100) NOT NULL,
+  `title` VARCHAR(21) NOT NULL,
   `emoji` VARCHAR(10) NOT NULL,
   `request_url` VARCHAR(200) NOT NULL,
   `product_url` VARCHAR(200) NOT NULL,
@@ -86,21 +86,21 @@ values
   ),
   (
     'bl_shirts',
-    'Женские блузки и рубашки',
+    'Блузки',
     '👚',
     'https://catalog.wb.ru/catalog/%s/v2/catalog?ab_testing=false&appType=1&cat=8126&curr=rub&dest=-5892277&hide_dtype=13&lang=ru&page=%d&sort=popular&spp=30',
     'https://www.wildberries.ru/catalog/%d/detail.aspx'
   ),
   (
     'jumpers_cardigans',
-    'Женские джемперы и кардиганы',
+    'Джемперы',
     '🧥',
     'https://catalog.wb.ru/catalog/%s/v2/catalog?ab_testing=false&appType=1&cat=8130&curr=rub&dest=-1257786&hide_dtype=13&lang=ru&page=%d&sort=popular&spp=30',
     'https://www.wildberries.ru/catalog/%d/detail.aspx'
   ),
   (
     'outwear1',
-    'Верхняя женская одежда',
+    'Верхняя одежда',
     '👘',
     'https://catalog.wb.ru/catalog/%s/v2/catalog?ab_testing=false&appType=1&cat=63010&curr=rub&dest=-1257786&hide_dtype=13&lang=ru&page=%d&sort=popular&spp=30',
     'https://www.wildberries.ru/catalog/%d/detail.aspx'
