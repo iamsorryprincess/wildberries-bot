@@ -14,9 +14,7 @@ type HandlerFunc func(context.Context) error
 
 type Worker struct {
 	logger log.Logger
-
-	mu sync.Mutex
-	wg sync.WaitGroup
+	wg     sync.WaitGroup
 }
 
 func NewWorker(logger log.Logger, closerStack CloserStack) *Worker {
@@ -29,9 +27,7 @@ func NewWorker(logger log.Logger, closerStack CloserStack) *Worker {
 }
 
 func (w *Worker) Run(ctx context.Context, name string, handler HandlerFunc) {
-	w.mu.Lock()
 	w.wg.Add(1)
-	w.mu.Unlock()
 
 	go func(ctx context.Context, handler HandlerFunc) {
 		defer w.wg.Done()
@@ -52,9 +48,7 @@ func (w *Worker) Run(ctx context.Context, name string, handler HandlerFunc) {
 }
 
 func (w *Worker) RunWithInterval(ctx context.Context, name string, interval time.Duration, handler HandlerFunc) {
-	w.mu.Lock()
 	w.wg.Add(1)
-	w.mu.Unlock()
 
 	go func(ctx context.Context, interval time.Duration, handler HandlerFunc) {
 		defer w.wg.Done()
