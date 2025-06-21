@@ -40,20 +40,18 @@ func NewQueue[TMessage any](ctx context.Context, logger log.Logger, config Confi
 
 		for {
 			select {
-			case _, ok := <-queue.exit:
-				if !ok {
-					queue.logger.Debug().Msg("memory queue stopped")
+			case <-queue.exit:
+				queue.logger.Debug().Msg("memory queue stopped")
 
-					if len(batch) > 0 {
-						queue.handle(ctx, batch)
-					}
-
-					if len(queue.messages) > 0 {
-						queue.drain(ctx)
-					}
-
-					return
+				if len(batch) > 0 {
+					queue.handle(ctx, batch)
 				}
+
+				if len(queue.messages) > 0 {
+					queue.drain(ctx)
+				}
+
+				return
 			case msg := <-queue.messages:
 				batch = append(batch, msg)
 
@@ -80,7 +78,7 @@ func (q *Queue[TMessage]) Push(_ context.Context, message TMessage) error {
 }
 
 func (q *Queue[TMessage]) Close() error {
-	close(q.exit)
+	q.exit <- struct{}{}
 	q.wg.Wait()
 	return nil
 }
