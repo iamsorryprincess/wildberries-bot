@@ -87,6 +87,7 @@ func (s *ProductService) UpdateProducts(ctx context.Context, category model.Cate
 	}
 
 	var err error
+	isUpdated := false
 
 	for {
 		s.logger.Debug().Int("page", request.Page).Msg("products request")
@@ -105,6 +106,7 @@ func (s *ProductService) UpdateProducts(ctx context.Context, category model.Cate
 			break
 		}
 
+		isUpdated = true
 		request.Page++
 	}
 
@@ -112,8 +114,10 @@ func (s *ProductService) UpdateProducts(ctx context.Context, category model.Cate
 		return err
 	}
 
-	if err = s.trackingNotifier.SendNotifications(ctx, category.ID); err != nil {
-		return err
+	if isUpdated {
+		if err = s.trackingNotifier.SendNotifications(ctx, category.ID); err != nil {
+			return err
+		}
 	}
 
 	return nil
