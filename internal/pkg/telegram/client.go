@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/go-telegram/bot"
-	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/background"
 )
 
 type BotClient struct {
@@ -30,8 +29,7 @@ func NewBotClient(config Config, options ...bot.Option) (*BotClient, error) {
 	return botClient, nil
 }
 
-func (c *BotClient) Start(ctx context.Context, closerStack background.CloserStack) {
-	closerStack.Push(c)
+func (c *BotClient) Start(ctx context.Context) {
 	c.wg.Add(1)
 	go func() {
 		defer c.wg.Done()

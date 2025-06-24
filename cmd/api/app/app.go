@@ -21,8 +21,8 @@ type App struct {
 	config config.Config
 	logger log.Logger
 
-	closeStack *background.CloseStack
-	appErrors  *background.ErrorsChannel
+	fatalErrors chan error
+	closerStack *background.CloserStack
 
 	ctx context.Context
 
@@ -58,9 +58,9 @@ func (a *App) Run() {
 	a.config = cfg
 	a.logger = log.New(a.config.LogLevel, serviceName)
 
-	a.closeStack = background.NewCloseStack(a.logger)
-	defer a.closeStack.Close()
-	a.appErrors = background.NewErrorsChannel()
+	a.fatalErrors = make(chan error, 1)
+	a.closerStack = background.NewCloserStack(a.logger)
+	defer a.closerStack.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	a.ctx = ctx
@@ -80,7 +80,7 @@ func (a *App) Run() {
 
 	a.logger.Info().Msg("service started")
 
-	s, err := background.Wait(a.appErrors)
+	s, err := background.Wait(a.fatalErrors)
 	if err != nil {
 		a.logger.Error().Err(err).Msg("service failed")
 		return
@@ -92,13 +92,15 @@ func (a *App) Run() {
 func (a *App) initDatabases() error {
 	var err error
 
-	a.mysqlConn, err = mysql.NewConnection(a.logger, a.config.MysqlConfig, a.closeStack)
+	a.mysqlConn, err = mysql.NewConnection(a.logger, a.config.MysqlConfig)
 	if err != nil {
 		a.logger.Error().Err(err).Msg("mysql connect failed")
 		return err
 	}
 
+	a.closerStack.Push(a.mysqlConn)
 	a.logger.Info().Msg("mysql connected successful")
+
 	return nil
 }
 
@@ -119,14 +121,19 @@ func (a *App) initTelegram() error {
 	}
 
 	a.botClient = botClient
+	a.closerStack.Push(a.botClient)
+
 	telegramtransport.InitHandlers(a.logger, a.botClient, a.categoryRepository, a.sizeRepository, a.trackingRepository)
 	a.sender = telegramtransport.NewSender(a.botClient)
-	a.botClient.Start(a.ctx, a.closeStack)
+	a.botClient.Start(a.ctx)
+
 	return nil
 }
 
 func (a *App) initWorkers() {
-	a.worker = background.NewWorker(a.logger, a.closeStack)
+	a.worker = background.NewWorker(a.logger)
+	a.closerStack.Push(a.worker)
+
 	a.productClient = httptransport.NewProductClient(a.logger, a.config.ProductsClientConfig, http.NewClient(a.config.HTTPClientConfig))
 	a.trackingService = service.NewTrackingService(a.logger, a.trackingRepository, a.sender)
 

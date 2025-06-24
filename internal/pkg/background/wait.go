@@ -6,12 +6,7 @@ import (
 	"syscall"
 )
 
-type AppErrors interface {
-	Push(err error)
-	Errors() <-chan error
-}
-
-func Wait(appErrors AppErrors) (os.Signal, error) {
+func Wait(fatalErrors <-chan error) (os.Signal, error) {
 	exit := make(chan os.Signal, 1)
 	signal.Notify(exit, syscall.SIGINT, syscall.SIGTERM)
 
@@ -19,7 +14,7 @@ func Wait(appErrors AppErrors) (os.Signal, error) {
 	case s := <-exit:
 		signal.Stop(exit)
 		return s, nil
-	case err := <-appErrors.Errors():
+	case err := <-fatalErrors:
 		return nil, err
 	}
 }

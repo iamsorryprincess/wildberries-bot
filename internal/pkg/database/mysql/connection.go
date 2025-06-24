@@ -5,7 +5,6 @@ import (
 
 	// mysql driver
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/background"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/log"
 )
 
@@ -15,7 +14,7 @@ type Connection struct {
 	*sql.DB
 }
 
-func NewConnection(logger log.Logger, config Config, closerStack background.CloserStack) (*Connection, error) {
+func NewConnection(logger log.Logger, config Config) (*Connection, error) {
 	db, err := sql.Open("mysql", config.ConnectionString)
 	if err != nil {
 		return nil, err
@@ -30,15 +29,11 @@ func NewConnection(logger log.Logger, config Config, closerStack background.Clos
 		return nil, err
 	}
 
-	connection := &Connection{
+	return &Connection{
 		logger: logger,
 		config: config,
 		DB:     db,
-	}
-
-	closerStack.Push(connection)
-
-	return connection, nil
+	}, nil
 }
 
 func (c *Connection) CloseRows(rows *sql.Rows) {

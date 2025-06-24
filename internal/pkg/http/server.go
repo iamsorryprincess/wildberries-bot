@@ -6,22 +6,23 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/background"
 	"github.com/iamsorryprincess/wildberries-bot/internal/pkg/log"
 )
 
 type Server struct {
-	logger    log.Logger
-	config    ServerConfig
-	appErrors background.AppErrors
-	server    *http.Server
+	logger log.Logger
+	config ServerConfig
+
+	fatalErrors chan<- error
+
+	server *http.Server
 }
 
-func NewServer(logger log.Logger, config ServerConfig, closerStack background.CloserStack, appErrors background.AppErrors, handler http.Handler) *Server {
-	server := &Server{
-		logger:    logger,
-		config:    config,
-		appErrors: appErrors,
+func NewServer(logger log.Logger, config ServerConfig, fatalErrors chan<- error, handler http.Handler) *Server {
+	return &Server{
+		logger:      logger,
+		config:      config,
+		fatalErrors: fatalErrors,
 		server: &http.Server{
 			Addr:              fmt.Sprintf(":%d", config.Port),
 			Handler:           handler,
@@ -32,17 +33,13 @@ func NewServer(logger log.Logger, config ServerConfig, closerStack background.Cl
 			MaxHeaderBytes:    config.MaxHeaderBytes,
 		},
 	}
-
-	closerStack.Push(server)
-
-	return server
 }
 
 func (s *Server) Start() {
 	go func() {
 		s.logger.Debug().Msgf("starting http server at port %d", s.config.Port)
 		if err := s.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			s.appErrors.Push(err)
+			s.fatalErrors <- err
 		}
 	}()
 }

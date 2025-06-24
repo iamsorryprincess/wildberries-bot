@@ -17,13 +17,10 @@ type Worker struct {
 	wg     sync.WaitGroup
 }
 
-func NewWorker(logger log.Logger, closerStack CloserStack) *Worker {
-	w := &Worker{
+func NewWorker(logger log.Logger) *Worker {
+	return &Worker{
 		logger: logger,
 	}
-
-	closerStack.Push(w)
-	return w
 }
 
 func (w *Worker) Run(ctx context.Context, name string, handler HandlerFunc) {
